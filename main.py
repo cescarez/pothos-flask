@@ -19,21 +19,19 @@ firebase = pyrebase.initialize_app(config)
 def owners():
     db = firebase.database()
     if request.method == 'POST':
-        req = request.get_json()
+        submitted_data = request.get_json()
         new_owner = {
-            'name': req['name'],
-            'email': req['email'],
-            'phone': req['phone'],
-            'date_joined': str(datetime.utcnow())
+            'date_joined': str(datetime.utcnow()),
+            'name': submitted_data['name'],
+            'email': submitted_data['email'],
+            'phone': submitted_data['phone']
         }
 
-
         db.child('owners').push(new_owner)
-        return(request.form)
-        # return({'message':'test data successfully posted. check database for posted data'})
+        return({'message':'test data successfully posted. check database for posted data'})
     else:
-        user_list = []
-        return({'message': 'get request was sent'})
+        owners = db.child('owners').get().val()
+        return(owners)
 if __name__ == '__main__':
     print('This file has been run as main')
 else:
