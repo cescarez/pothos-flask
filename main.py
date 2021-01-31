@@ -32,6 +32,8 @@ def owners():
     else:
         owners = db.child('owners').get().val()
         return(owners)
+
+
 if __name__ == '__main__':
     print('This file has been run as main')
 else:
