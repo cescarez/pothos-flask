@@ -16,44 +16,45 @@ config = {
 app = Flask(__name__)
 firebase = pyrebase.initialize_app(config)
 
-@app.route('/owners', methods=['GET', 'POST'])
-def owners():
+# @app.route('/owners', methods=['GET', 'POST'])
+# def owners():
+#     db = firebase.database()
+#     if request.method == 'POST':
+#         submitted_data = request.get_json()
+#         new_owner = {
+#             'date_joined': str(datetime.utcnow()),
+#             'name': submitted_data['name'],
+#             'email': submitted_data['email'],
+#             'phone': submitted_data['phone']
+#         }
+
+#         db.child('owners').push(new_owner)
+#         return({'message':'test data successfully posted. check database for posted data'})
+#     else:
+#         owners = db.child('owners').get().val()
+#         return(owners)
+
+@app.route('/<string:usertype>', methods=['GET', 'POST'])
+def users_index(usertype):
     db = firebase.database()
+    usertype = escape(usertype)
     if request.method == 'POST':
         submitted_data = request.get_json()
-        new_owner = {
-            'date_joined': str(datetime.utcnow()),
-            'name': submitted_data['name'],
-            'email': submitted_data['email'],
-            'phone': submitted_data['phone']
-        }
-
-        db.child('owners').push(new_owner)
+        if (usertype == 'sitters' or usertype == 'owners'):
+            new_user = {
+                'date_joined': str(datetime.utcnow()),
+                'name': submitted_data['name'],
+                'email': submitted_data['email'],
+                'phone': submitted_data['phone']
+            }
+        db.child(usertype).push(new_user)
         return({'message':'test data successfully posted. check database for posted data'})
     else:
-        owners = db.child('owners').get().val()
-        return(owners)
-
-@app.route('/sitters', methods=['GET', 'POST'])
-def sitters():
-    db = firebase.database()
-    if request.method == 'POST':
-        submitted_data = request.get_json()
-        new_sitter = {
-            'date_joined': str(datetime.utcnow()),
-            'name': submitted_data['name'],
-            'email': submitted_data['email'],
-            'phone': submitted_data['phone']
-        }
-
-        db.child('sitters').push(new_sitter)
-        return({'message':'test data successfully posted. check database for posted data'})
-    else:
-        sitters = db.child('sitters').get().val()
-        return(sitters)
+        users = db.child(usertype).get().val()
+        return(users)
 
 @app.route('/<string:usertype>/<string:id>', methods=['GET'])
-def show_user(usertype, id):
+def users_show(usertype, id):
     db = firebase.database()
     usertype = escape(usertype)
     if (usertype == 'sitters' or usertype == 'owners'):
