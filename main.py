@@ -1,6 +1,7 @@
+from flask import Flask, request
 import os
 from datetime import datetime
-from flask import Flask, request
+from markupsafe import escape
 import pyrebase
 from dotenv import load_dotenv
 load_dotenv()
@@ -50,6 +51,12 @@ def sitters():
     else:
         sitters = db.child('sitters').get().val()
         return(sitters)
+
+@app.route('/sitters/<string:id>', methods=['GET'])
+def show_sitter(id):
+    db = firebase.database()
+    sitter = db.child('sitters').child(escape(id)).get().val()
+    return(sitter)
 
 
 
