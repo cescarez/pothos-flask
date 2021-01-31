@@ -33,6 +33,25 @@ def owners():
         owners = db.child('owners').get().val()
         return(owners)
 
+@app.route('/sitters', methods=['GET', 'POST'])
+def sitters():
+    db = firebase.database()
+    if request.method == 'POST':
+        submitted_data = request.get_json()
+        new_sitter = {
+            'date_joined': str(datetime.utcnow()),
+            'name': submitted_data['name'],
+            'email': submitted_data['email'],
+            'phone': submitted_data['phone']
+        }
+
+        db.child('sitters').push(new_sitter)
+        return({'message':'test data successfully posted. check database for posted data'})
+    else:
+        sitters = db.child('sitters').get().val()
+        return(sitters)
+
+
 
 if __name__ == '__main__':
     print('This file has been run as main')
