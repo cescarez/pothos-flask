@@ -2,7 +2,7 @@ from flask import Flask, request
 import os
 from datetime import datetime
 from markupsafe import escape
-import pyrebase
+from pyrebase import pyrebase
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -21,6 +21,7 @@ def users_index(usertype):
     db = firebase.database()
     usertype = escape(usertype)
     if request.method == 'POST':
+        #assumes JSON format, not form 
         submitted_data = request.get_json()
         if (usertype == 'sitters' or usertype == 'owners'):
             new_user = {
@@ -29,8 +30,10 @@ def users_index(usertype):
                 'email': submitted_data['email'],
                 'phone': submitted_data['phone']
             }
-        db.child(usertype).push(new_user)
-        return({'message':'test data successfully posted. check database for posted data'})
+            db.child(usertype).push(new_user)
+            return({'message':'test data successfully posted. check database for posted data'})
+        else:
+            return({'message':'invalid endpoint. No user created.'})
     else:
         users = db.child(usertype).get().val()
         return(users)
@@ -48,4 +51,4 @@ def users_show(usertype, id):
 if __name__ == '__main__':
     print('This file has been run as main')
 else:
-    print('Error, this file should not be imported as a module.')
+    print('This file has been imported as a module.')
