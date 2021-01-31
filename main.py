@@ -52,10 +52,12 @@ def sitters():
         sitters = db.child('sitters').get().val()
         return(sitters)
 
-@app.route('/sitters/<string:id>', methods=['GET'])
-def show_sitter(id):
+@app.route('/<string:usertype>/<string:id>', methods=['GET'])
+def show_user(usertype, id):
     db = firebase.database()
-    sitter = db.child('sitters').child(escape(id)).get().val()
+    usertype = escape(usertype)
+    if (usertype == 'sitters' or usertype == 'owners'):
+        sitter = db.child(usertype).child(escape(id)).get().val()
     return(sitter)
 
 
