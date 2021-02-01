@@ -45,7 +45,8 @@ def add_user():
                 'water_by_time': submitted_data['price_rate']['water_by_time'],
                 'repot_by_plant': submitted_data['price_rate']['repot_by_plant'],
                 'repot_by_time': submitted_data['price_rate']['repot_by_time']
-            }
+            },
+            'bio': ''
         }
         db.child('users').push(new_user)
         return({'message':'new user successfully added. check database for posted data'})
