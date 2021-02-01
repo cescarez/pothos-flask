@@ -26,11 +26,10 @@ def users_index(usertype):
         if (usertype == 'sitters' or usertype == 'owners'):
             new_user = {
                 'date_joined': str(datetime.utcnow()),
-                'type': {
-                    #how will this be passed from front end?
-                    'sitter': eval(usertype == 'sitters'),
-                    'owner': eval(usertype == 'owners')
-                },
+                #how will this be passed from front end?
+                #run posts to check if evaluates
+                'sitter': (usertype == 'sitters'),
+                'owner': (usertype == 'owners'),
                 'username': submitted_data['username'],
                 'full_name': submitted_data['full_name'],
                 'phone_number': submitted_data['phone_number'],
@@ -49,7 +48,7 @@ def users_index(usertype):
                     'water_by_plant': submitted_data['price_rate']['water_by_plant'],
                     'water_by_time': submitted_data['price_rate']['water_by_time'],
                     'repot_by_plant': submitted_data['price_rate']['repot_by_plant'],
-                    'repot_by_time': submitted_data['price_rate']['repot_by_time'],
+                    'repot_by_time': submitted_data['price_rate']['repot_by_time']
                 }
             }
             
@@ -60,7 +59,10 @@ def users_index(usertype):
     else:
         #review this logic
         #does db order change when a patch request is sent? if so, then chain a .order_by_key() as first call
-        users = db.child('users').order_by_child('type').order_by_child.(usertype[0:-1]).equal_to(True).get().val()
+        if usertype == 'sitters':
+            users = db.child('users').order_by_child('sitter').equal_to(True).get().val()
+        else:
+            users = db.child('users').order_by_child('owner').equal_to(True).get().val()
         return(users)
 
 @app.route('/<string:usertype>/<string:id>', methods=['GET'])
