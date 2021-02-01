@@ -26,16 +26,41 @@ def users_index(usertype):
         if (usertype == 'sitters' or usertype == 'owners'):
             new_user = {
                 'date_joined': str(datetime.utcnow()),
-                'name': submitted_data['name'],
+                'type': {
+                    #how will this be passed from front end?
+                    'sitter': eval(usertype == 'sitters'),
+                    'owner': eval(usertype == 'owners')
+                },
+                'username': submitted_data['username'],
+                'full_name': submitted_data['full_name'],
+                'phone_number': submitted_data['phone_number'],
                 'email': submitted_data['email'],
-                'phone': submitted_data['phone']
+                'address': {
+                    'street': submitted_data['address']['street'],
+                    'city': submitted_data['address']['city'],
+                    'state': submitted_data['address']['state'],
+                    'postal_code': submitted_data['address']['postal_code'],
+                    'country': submitted_data['address']['country']
+                },
+                'avatar_url': submitted_data['avatar_url'],
+                # 'rating': submitted_data['rating'],
+                'messages': {},
+                'price_rate': {
+                    'water_by_plant': submitted_data['price_rate']['water_by_plant'],
+                    'water_by_time': submitted_data['price_rate']['water_by_time'],
+                    'repot_by_plant': submitted_data['price_rate']['repot_by_plant'],
+                    'repot_by_time': submitted_data['price_rate']['repot_by_time'],
+                }
             }
-            db.child(usertype).push(new_user)
-            return({'message':'test data successfully posted. check database for posted data'})
+            
+            db.child('users').push(new_user)
+            return({'message':'new user successfully added. check database for posted data'})
         else:
             return({'message':'invalid endpoint. No user created.'})
     else:
-        users = db.child(usertype).get().val()
+        #review this logic
+        #does db order change when a patch request is sent? if so, then chain a .order_by_key() as first call
+        users = db.child('users').order_by_child('type').order_by_child.(usertype[0:-1]).equal_to(True).get().val()
         return(users)
 
 @app.route('/<string:usertype>/<string:id>', methods=['GET'])
@@ -43,8 +68,8 @@ def users_show(usertype, id):
     db = firebase.database()
     usertype = escape(usertype)
     if (usertype == 'sitters' or usertype == 'owners'):
-        sitter = db.child(usertype).child(escape(id)).get().val()
-    return(sitter)
+        user = db.child(usertype).child(escape(id)).get().val()
+    return(user)
 
 
 
