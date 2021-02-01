@@ -49,7 +49,7 @@ def users_index(usertype):
                     'water_by_time': submitted_data['price_rate']['water_by_time'],
                     'repot_by_plant': submitted_data['price_rate']['repot_by_plant'],
                     'repot_by_time': submitted_data['price_rate']['repot_by_time']
-                }
+                } 
             }
             
             db.child('users').push(new_user)
@@ -57,13 +57,16 @@ def users_index(usertype):
         else:
             return({'message':'invalid endpoint. No user created.'})
     else:
-        #review this logic
         #does db order change when a patch request is sent? if so, then chain a .order_by_key() as first call
         if usertype == 'sitters':
             users = db.child('users').order_by_child('sitter').equal_to(True).get().val()
         else:
             users = db.child('users').order_by_child('owner').equal_to(True).get().val()
-        return(users)
+
+        if users:
+            return(users)
+        else:
+            return({'message': 'No users'})
 
 @app.route('/<string:usertype>/<string:id>', methods=['GET'])
 def users_show(usertype, id):
