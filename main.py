@@ -1,4 +1,5 @@
 from flask import Flask, request
+from flask_cors import CORS, cross_origin
 import os
 from datetime import datetime
 from markupsafe import escape
@@ -14,6 +15,7 @@ config = {
 }
 
 app = Flask(__name__)
+CORS(app, support_credentials=True)
 firebase = pyrebase.initialize_app(config)
 
 @app.route('/users', methods=['POST'])
