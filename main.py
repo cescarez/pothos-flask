@@ -26,6 +26,7 @@ def add_user():
             'date_joined': str(datetime.utcnow()),
             'sitter': submitted_data['sitter'],
             'owner': submitted_data['owner'],
+            'bio': '',
             'username': submitted_data['username'],
             'full_name': submitted_data['full_name'],
             'phone_number': submitted_data['phone_number'],
@@ -45,8 +46,7 @@ def add_user():
                 'water_by_time': submitted_data['price_rate']['water_by_time'],
                 'repot_by_plant': submitted_data['price_rate']['repot_by_plant'],
                 'repot_by_time': submitted_data['price_rate']['repot_by_time']
-            },
-            'bio': ''
+            }
         }
         db.child('users').push(new_user)
         return({'message':'new user successfully added. check database for posted data'})
@@ -70,12 +70,10 @@ def users_index(usertype):
     else:
         return({'message':'invalid endpoint.'})
 
-@app.route('/<string:usertype>/<string:id>', methods=['GET'])
-def users_show(usertype, id):
+@app.route('/users/<string:id>', methods=['GET'])
+def users_show(id):
     db = firebase.database()
-    usertype = escape(usertype)
-    if (usertype == 'sitters' or usertype == 'owners'):
-        user = db.child(usertype).child(escape(id)).get().val()
+    user = db.child('users').child(escape(id)).get().val()
     return(user)
 
 
