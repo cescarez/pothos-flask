@@ -28,7 +28,7 @@ def add_user():
             'date_joined': str(datetime.utcnow()),
             'sitter': submitted_data['sitter'],
             'owner': submitted_data['owner'],
-            'bio': '',
+            'bio': submitted_data['bio'],
             'username': submitted_data['username'],
             'full_name': submitted_data['full_name'],
             'phone_number': submitted_data['phone_number'],
