@@ -18,6 +18,7 @@ app = Flask(__name__)
 CORS(app, support_credentials=True)
 firebase = pyrebase.initialize_app(config)
 
+#user post
 @app.route('/users', methods=['POST'])
 def add_user():
     db = firebase.database()
@@ -42,7 +43,7 @@ def add_user():
             },
             'avatar_url': submitted_data['avatar_url'],
             # 'rating': submitted_data['rating'],
-            'messages': {},
+            'chat_history': {},
             'price_rate': {
                 'water_by_plant': submitted_data['price_rate']['water_by_plant'],
                 'water_by_time': submitted_data['price_rate']['water_by_time'],
@@ -55,6 +56,7 @@ def add_user():
     else:
         return({'message':'invalid endpoint. No user created.'})
 
+#sitters and owners indexes
 @app.route('/<string:usertype>', methods=['GET'])
 def users_index(usertype):
     #does db order change when a patch request is sent? if so, then chain a .order_by_key() as first call
@@ -72,12 +74,20 @@ def users_index(usertype):
     else:
         return({'message':'invalid endpoint.'})
 
+#user show
 @app.route('/users/<string:id>', methods=['GET'])
 def users_show(id):
     db = firebase.database()
     user = db.child('users').child(escape(id)).get().val()
     return(user)
 
+#CHANGE THIS. THIS IS JUST A TEST TO GET USER DATA FROM DB TO FRONT END
+@app.route('/users/test/<string:email>', methods=['GET'])
+def find_user(email):
+    db = firebase.database()
+    # user = db.child('users').order_by_child('email').equal_to(escape(email)).get().val()
+    user = db.child('users').order_by_child('email').equal_to((email)).get().val()
+    return(user)
 
 
 if __name__ == '__main__':
