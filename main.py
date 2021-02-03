@@ -26,6 +26,7 @@ def add_user():
         #assumes JSON format, not form 
         submitted_data = request.get_json()
         new_user = {
+            'auth_id': submitted_data['auth_id'],
             'date_joined': str(datetime.utcnow()),
             'sitter': submitted_data['sitter'],
             'owner': submitted_data['owner'],
