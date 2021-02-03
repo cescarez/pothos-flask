@@ -81,12 +81,11 @@ def users_show(id):
     user = db.child('users').child(escape(id)).get().val()
     return(user)
 
-#CHANGE THIS. THIS IS JUST A TEST TO GET USER DATA FROM DB TO FRONT END
-@app.route('/users/test/<string:email>', methods=['GET'])
-def find_user(email):
+#retrieve data for dashboard
+@app.route('/users/current/<string:auth_id>', methods=['GET'])
+def find_user(auth_id):
     db = firebase.database()
-    # user = db.child('users').order_by_child('email').equal_to(escape(email)).get().val()
-    user = db.child('users').order_by_child('email').equal_to((email)).get().val()
+    user = db.child('users').order_by_child('auth_id').equal_to(auth_id).get().val()
     return(user)
 
 
