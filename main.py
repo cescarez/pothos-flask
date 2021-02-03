@@ -46,10 +46,10 @@ def add_user():
             # 'rating': submitted_data['rating'],
             'chat_history': {},
             'price_rate': {
-                'water_by_plant': submitted_data['price_rate']['water_by_plant'],
-                'water_by_time': submitted_data['price_rate']['water_by_time'],
-                'repot_by_plant': submitted_data['price_rate']['repot_by_plant'],
-                'repot_by_time': submitted_data['price_rate']['repot_by_time']
+                'water_by_plant': float(submitted_data['price_rate']['water_by_plant']),
+                'water_by_time': float(submitted_data['price_rate']['water_by_time']),
+                'repot_by_plant': float(submitted_data['price_rate']['repot_by_plant']),
+                'repot_by_time': float(submitted_data['price_rate']['repot_by_time'])
             }
         }
         db.child('users').push(new_user)
