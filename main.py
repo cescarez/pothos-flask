@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, Response
 from flask_cors import CORS, cross_origin
 import os
 from datetime import datetime
@@ -46,16 +46,24 @@ def add_user():
             # 'rating': submitted_data['rating'],
             'chat_history': {},
             'price_rate': {
-                'water_by_plant': float(submitted_data['price_rate']['water_by_plant']),
-                'water_by_time': float(submitted_data['price_rate']['water_by_time']),
-                'repot_by_plant': float(submitted_data['price_rate']['repot_by_plant']),
-                'repot_by_time': float(submitted_data['price_rate']['repot_by_time'])
+                'water_by_plant': float(submitted_data['price_rate']['water_by_plant']) if submitted_data['price_rate']['water_by_plant'] else '',
+                'water_by_time': float(submitted_data['price_rate']['water_by_time'])  if submitted_data['price_rate']['water_by_time'] else '',
+                'repot_by_plant': float(submitted_data['price_rate']['repot_by_plant']) if submitted_data['price_rate']['repot_by_plant'] else '',
+                'repot_by_time': float(submitted_data['price_rate']['repot_by_time']) if submitted_data['price_rate']['repot_by_time'] else ''
             }
         }
         db.child('users').push(new_user)
-        return({'message':'new user successfully added. check database for posted data'})
+        return(Response(
+            "{'message':'User profile was successfully added to the database. Check database for posted data.'}",
+            status=200,
+            mimetype='application/json'
+        ))
     else:
-        return({'message':'invalid endpoint. No user created.'})
+        return(Response(
+            "{'error':'Invalid endpoint. User profile was not saved to the database.'}",
+            status=404,
+            mimetype='application/json'
+        ))
 
 #sitters and owners indexes
 @app.route('/<string:usertype>', methods=['GET'])
@@ -71,23 +79,29 @@ def users_index(usertype):
         if users:
             return(users)
         else:
-            return({'message': 'No users'})
+            return({'message': 'No {usertype} in database to display.'})
     else:
-        return({'message':'invalid endpoint.'})
+        return(Response("{'error':'Invalid endpoint.'}", status=404, mimetype='application/json'))
 
-#user show
+#user show via backend ID
 @app.route('/users/<string:id>', methods=['GET'])
 def users_show(id):
     db = firebase.database()
     user = db.child('users').child(escape(id)).get().val()
-    return(user)
+    if user:
+        return(user)
+    else:
+        return({'message': 'No user profile has been stored with the entered user ID.'})
 
-#retrieve data for dashboard
+#user show via frontend ID
 @app.route('/users/current/<string:auth_id>', methods=['GET'])
 def find_user(auth_id):
     db = firebase.database()
     user = db.child('users').order_by_child('auth_id').equal_to(auth_id).get().val()
-    return(user)
+    if user:
+        return(user)
+    else:
+        return({'message': 'No user profile has been saved with the logged in user\'s authentication ID.'})
 
 
 if __name__ == '__main__':
