@@ -1,10 +1,11 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response, abort
 from flask_cors import CORS, cross_origin
 import os
 from datetime import datetime
 from markupsafe import escape
 from pyrebase import pyrebase
 from dotenv import load_dotenv
+
 load_dotenv()
 
 config = {
@@ -54,16 +55,12 @@ def add_user():
         }
         db.child('users').push(new_user)
         return(Response(
-            "{'message':'User profile was successfully added to the database. Check database for posted data.'}",
+            {'message':'User profile was successfully added to the database. Check database for posted data.'},
             status=200,
             mimetype='application/json'
         ))
     else:
-        return(Response(
-            "{'error':'Invalid endpoint. User profile was not saved to the database.'}",
-            status=404,
-            mimetype='application/json'
-        ))
+        abort(404, 'Invalid endpoint. User profile was not saved to the database.')
 
 #sitters and owners indexes
 @app.route('/<string:usertype>', methods=['GET'])
@@ -81,17 +78,50 @@ def users_index(usertype):
         else:
             return({'message': 'No {usertype} in database to display.'})
     else:
-        return(Response("{'error':'Invalid endpoint.'}", status=404, mimetype='application/json'))
+        abort(404, 'Invalid endpoint.')
+
 
 #user show via backend ID
-@app.route('/users/<string:id>', methods=['GET'])
+@app.route('/users/<string:id>', methods=['GET', 'PATCH'])
 def users_show(id):
     db = firebase.database()
-    user = db.child('users').child(escape(id)).get().val()
-    if user:
-        return(user)
+    if request.method == 'GET':
+        user = db.child('users').child(escape(id)).get().val()
+        if user:
+            return(user)
+        else:
+            return({'message': 'No user profile has been stored with the entered user ID.'})
     else:
-        return({'message': 'No user profile has been stored with the entered user ID.'})
+        submitted_data = request.get_json()
+        user = db.child('users').child(escape(id)).get().val()
+        if user:
+            updated_user = {
+                'sitter': submitted_data['sitter'],
+                'owner': submitted_data['owner'],
+                'bio': submitted_data['bio'],
+                'username': submitted_data['username'],
+                'full_name': submitted_data['full_name'],
+                'phone_number': submitted_data['phone_number'],
+                'address': {
+                    'street': submitted_data['address']['street'],
+                    'city': submitted_data['address']['city'],
+                    'state': submitted_data['address']['state'],
+                    'postal_code': submitted_data['address']['postal_code'],
+                    'country': submitted_data['address']['country']
+                },
+                'avatar_url': submitted_data['avatar_url'],
+                'price_rate': {
+                    'water_by_plant': float(submitted_data['price_rate']['water_by_plant']) if submitted_data['price_rate']['water_by_plant'] else '',
+                    'water_by_time': float(submitted_data['price_rate']['water_by_time'])  if submitted_data['price_rate']['water_by_time'] else '',
+                    'repot_by_plant': float(submitted_data['price_rate']['repot_by_plant']) if submitted_data['price_rate']['repot_by_plant'] else '',
+                    'repot_by_time': float(submitted_data['price_rate']['repot_by_time']) if submitted_data['price_rate']['repot_by_time'] else ''
+                }
+            }
+            db.child('users').child(escape(id)).update(updated_user)
+            return(updated_user)
+        else:
+            abort(404, 'No user profile has been stored with the entered user ID.')
+        
 
 #user show via frontend ID
 @app.route('/users/current/<string:auth_id>', methods=['GET'])
