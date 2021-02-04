@@ -55,16 +55,12 @@ def add_user():
         }
         db.child('users').push(new_user)
         return(Response(
-            "{'message':'User profile was successfully added to the database. Check database for posted data.'}",
+            {'message':'User profile was successfully added to the database. Check database for posted data.'},
             status=200,
             mimetype='application/json'
         ))
     else:
-        return(Response(
-            "{'error':'Invalid endpoint. User profile was not saved to the database.'}",
-            status=404,
-            mimetype='application/json'
-        ))
+        abort(404, 'Invalid endpoint. User profile was not saved to the database.')
 
 #sitters and owners indexes
 @app.route('/<string:usertype>', methods=['GET'])
@@ -82,7 +78,8 @@ def users_index(usertype):
         else:
             return({'message': 'No {usertype} in database to display.'})
     else:
-        return(Response("{'error':'Invalid endpoint.'}", status=404, mimetype='application/json'))
+        abort(404, 'Invalid endpoint.')
+
 
 #user show via backend ID
 @app.route('/users/<string:id>', methods=['GET', 'PATCH'])
@@ -125,7 +122,6 @@ def users_show(id):
         else:
             abort(404, 'No user profile has been stored with the entered user ID.')
         
-
 
 #user show via frontend ID
 @app.route('/users/current/<string:auth_id>', methods=['GET'])
