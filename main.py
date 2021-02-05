@@ -35,7 +35,6 @@ def add_user():
             'username': submitted_data['username'],
             'full_name': submitted_data['full_name'],
             'phone_number': submitted_data['phone_number'],
-            'email': submitted_data['email'],
             'address': {
                 'street': submitted_data['address']['street'],
                 'city': submitted_data['address']['city'],
@@ -45,7 +44,7 @@ def add_user():
             },
             'avatar_url': submitted_data['avatar_url'],
             # 'rating': submitted_data['rating'],
-            'chat_history': {},
+            # 'chat_history': {},
             'price_rate': {
                 'water_by_plant': float(submitted_data['price_rate']['water_by_plant']) if submitted_data['price_rate']['water_by_plant'] else '',
                 'water_by_time': float(submitted_data['price_rate']['water_by_time'])  if submitted_data['price_rate']['water_by_time'] else '',
@@ -65,7 +64,6 @@ def add_user():
 #sitters and owners indexes
 @app.route('/<string:usertype>', methods=['GET'])
 def users_index(usertype):
-    #does db order change when a patch request is sent? if so, then chain a .order_by_key() as first call
     usertype = escape(usertype)[0:-1]
     db = firebase.database()
     if (usertype == 'sitter' or usertype == 'owner'):
@@ -120,7 +118,6 @@ def users_show(id):
             return(updated_user)
         else:
             abort(404, 'No user profile has been stored with the entered user ID.')
-        
 
 #user show via frontend ID
 @app.route('/users/current/<string:auth_id>', methods=['GET'])
@@ -133,7 +130,7 @@ def find_user(auth_id):
         return({'message': 'No user profile has been saved with the logged in user\'s authentication ID.'})
 
 
-if __name__ == '__main__':
-    print('This file has been run as main')
-else:
-    print('This file has been imported as a module.')
+# if __name__ == '__main__':
+#     print('This file has been run as main')
+# else:
+#     print('This file has been imported as a module.')
