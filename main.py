@@ -142,7 +142,7 @@ def submit_request():
             'owner': submitted_data['owner'],
             'sitter': submitted_data['sitter'],
             'status': 'pending',
-            'chat_log': '',
+            'chatID': '', #how to create a chat_log at the same time?
         }
         db.child('requests').push(new_request)
         return(Response(
@@ -151,26 +151,44 @@ def submit_request():
             mimetype='application/json'
         ))
     else:
-        abort(404, 'Invalid endpoint. User profile was not saved to the database.')
+        abort(404, 'Invalid endpoint. Request was not saved to the database.')
+
+#user show via backend ID
+@app.route('/users/<string:id>', methods=['GET', 'PUT'])
+def request_show(id):
+    db = firebase.database()
+    if request.method == 'GET':
+        sitting_request = db.child('requests').child(escape(id)).get().val()
+        if sitting_request:
+            return(sitting_request)
+        else:
+            return({'message': 'No request has been made with this ID'})
+    else:
+        submitted_data = request.get_json()
+        sitting_request = db.child('requests').child(escape(id)).get().val()
+        if sitting_request:
+            confirm_request = {
+                'time_confirmed': str(datetime.utcnow()),
+                'status': submitted_data['status'],
+            }
+            db.child('requests').child(escape(id)).update(confirm_request)
+            return(confirm_request)
+        else:
+            abort(404, 'No request has been made with this ID.')
 
 #sitting request post
-@app.route('/requests', methods=['POST'])
-def submit_request():
+@app.route('/chats', methods=['POST'])
+def start_chat():
     db = firebase.database()
     if request.method == 'POST':
         #assumes JSON format, not form 
         submitted_data = request.get_json()
-        new_request = {
-            'time_requested': str(datetime.utcnow()),
-            'time_confirmed': '',
-            'owner': submitted_data['owner'],
-            'sitter': submitted_data['sitter'],
-            'status': 'pending',
-            'chat_log': '',
+        new_chat = {
+            
         }
-        db.child('requests').push(new_request)
+        db.child('requests').push(new_chat)
         return(Response(
-            {'message':'Request was successfully submitted'},
+            {'message':'Chat succesfully started'},
             status=200,
             mimetype='application/json'
         ))
