@@ -43,8 +43,6 @@ def add_user():
                 'country': submitted_data['address']['country']
             },
             'avatar_url': submitted_data['avatar_url'],
-            # 'rating': submitted_data['rating'],
-            # 'chat_history': {},
             'price_rate': {
                 'water_by_plant': float(submitted_data['price_rate']['water_by_plant']) if submitted_data['price_rate']['water_by_plant'] else '',
                 'water_by_time': float(submitted_data['price_rate']['water_by_time'])  if submitted_data['price_rate']['water_by_time'] else '',
@@ -53,6 +51,9 @@ def add_user():
             }
         }
         db.child('users').push(new_user)
+
+        ##return two keys: success message AND new_user that was just posted
+        ##also -- this response object is probably not structured correctly
         return(Response(
             {'message':'User profile was successfully added to the database. Check database for posted data.'},
             status=200,
