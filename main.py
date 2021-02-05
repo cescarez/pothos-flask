@@ -129,8 +129,87 @@ def find_user(auth_id):
     else:
         return({'message': 'No user profile has been saved with the logged in user\'s authentication ID.'})
 
+#sitting request post
+@app.route('/requests', methods=['POST'])
+def submit_request():
+    db = firebase.database()
+    if request.method == 'POST':
+        #assumes JSON format, not form 
+        submitted_data = request.get_json()
+        new_request = {
+            'time_requested': str(datetime.utcnow()),
+            'time_confirmed': '',
+            'owner': submitted_data['owner'],
+            'sitter': submitted_data['sitter'],
+            'status': 'pending',
+            # 'chatID': ''
+        }
+        db.child('requests').push(new_request)
+        return(Response(
+            {'message':'Request was successfully submitted'}, #message doesn't render
+            status=200,
+            mimetype='application/json'
+        ))
+    else:
+        abort(404, 'Invalid endpoint. Request was not saved to the database.')
 
-# if __name__ == '__main__':
-#     print('This file has been run as main')
-# else:
-#     print('This file has been imported as a module.')
+#request show via backend ID
+@app.route('/requests/<string:id>', methods=['GET', 'PUT'])
+def request_show(id):
+    db = firebase.database()
+    if request.method == 'GET':
+        sitting_request = db.child('requests').child(escape(id)).get().val()
+        if sitting_request:
+            return(sitting_request)
+        else:
+            return({'message': 'No request has been made with this ID'})
+    else:
+        submitted_data = request.get_json()
+        sitting_request = db.child('requests').child(escape(id)).get().val()
+        if sitting_request:
+            confirm_request = {
+                'time_confirmed': str(datetime.utcnow()),
+                'status': submitted_data['status'],
+            }
+            db.child('requests').child(escape(id)).update(confirm_request)
+            return(confirm_request) #success message needed
+        else:
+            abort(404, 'No request has been made with this ID.')
+
+#chat messages post
+@app.route('/messages', methods=['POST'])
+def start_chat():
+    db = firebase.database()
+    if request.method == 'POST':
+        #assumes JSON format, not form 
+        submitted_data = request.get_json()
+        new_message = {
+            'timestamp': str(datetime.utcnow()),
+            'message': submitted_data['message'],
+            'sender': submitted_data['sender'],
+            'request_id': submitted_data['request_id']
+        }
+        db.child('messages').push(new_message)
+        return(Response(
+            {'message':'Message successfully sent'},
+            status=200,
+            mimetype='application/json'
+        ))
+    else:
+        abort(404, 'Invalid endpoint. User profile was not saved to the database.')
+
+#chat message show
+@app.route('/messages/<string:id>', methods=['GET'])
+def message_show(id):
+    db = firebase.database()
+    chat_message = db.child('messages').child(escape(id)).get().val()
+    if chat_message:
+        return(chat_message)
+    else:
+        return({'message': 'No message found'})
+
+
+if __name__ == '__main__':
+    print('This file has been run as main')
+else:
+    print('This file has been imported as a module.')
