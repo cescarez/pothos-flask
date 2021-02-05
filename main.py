@@ -35,7 +35,6 @@ def add_user():
             'username': submitted_data['username'],
             'full_name': submitted_data['full_name'],
             'phone_number': submitted_data['phone_number'],
-            'email': submitted_data['email'],
             'address': {
                 'street': submitted_data['address']['street'],
                 'city': submitted_data['address']['city'],
@@ -120,7 +119,6 @@ def users_show(id):
             return(updated_user)
         else:
             abort(404, 'No user profile has been stored with the entered user ID.')
-        
 
 #user show via frontend ID
 @app.route('/users/current/<string:auth_id>', methods=['GET'])
