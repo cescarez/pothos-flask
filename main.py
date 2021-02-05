@@ -64,10 +64,9 @@ def add_user():
 #sitters and owners indexes
 @app.route('/<string:usertype>', methods=['GET'])
 def users_index(usertype):
-    usertype = escape(usertype)[0:-1]
     db = firebase.database()
-    if (usertype == 'sitter' or usertype == 'owner'):
-        if usertype == 'sitter':
+    if (usertype == 'sitters' or usertype == 'owners'):
+        if usertype == 'sitters':
             users = db.child('users').order_by_child('sitter').equal_to(True).get().val()
         else:
             users = db.child('users').order_by_child('owner').equal_to(True).get().val()
