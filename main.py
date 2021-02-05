@@ -129,8 +129,56 @@ def find_user(auth_id):
     else:
         return({'message': 'No user profile has been saved with the logged in user\'s authentication ID.'})
 
+#sitting request post
+@app.route('/requests', methods=['POST'])
+def submit_request():
+    db = firebase.database()
+    if request.method == 'POST':
+        #assumes JSON format, not form 
+        submitted_data = request.get_json()
+        new_request = {
+            'time_requested': str(datetime.utcnow()),
+            'time_confirmed': '',
+            'owner': submitted_data['owner'],
+            'sitter': submitted_data['sitter'],
+            'status': 'pending',
+            'chat_log': '',
+        }
+        db.child('requests').push(new_request)
+        return(Response(
+            {'message':'Request was successfully submitted'},
+            status=200,
+            mimetype='application/json'
+        ))
+    else:
+        abort(404, 'Invalid endpoint. User profile was not saved to the database.')
 
-# if __name__ == '__main__':
-#     print('This file has been run as main')
-# else:
-#     print('This file has been imported as a module.')
+#sitting request post
+@app.route('/requests', methods=['POST'])
+def submit_request():
+    db = firebase.database()
+    if request.method == 'POST':
+        #assumes JSON format, not form 
+        submitted_data = request.get_json()
+        new_request = {
+            'time_requested': str(datetime.utcnow()),
+            'time_confirmed': '',
+            'owner': submitted_data['owner'],
+            'sitter': submitted_data['sitter'],
+            'status': 'pending',
+            'chat_log': '',
+        }
+        db.child('requests').push(new_request)
+        return(Response(
+            {'message':'Request was successfully submitted'},
+            status=200,
+            mimetype='application/json'
+        ))
+    else:
+        abort(404, 'Invalid endpoint. User profile was not saved to the database.')
+
+
+if __name__ == '__main__':
+    print('This file has been run as main')
+else:
+    print('This file has been imported as a module.')
