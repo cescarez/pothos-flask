@@ -70,7 +70,7 @@ def users_index(usertype):
         if usertype == 'sitter':
             users = db.child('users').order_by_child('sitter').equal_to(True).get().val()
         else:
-            users = db.child('users').order_by_child('sitter').equal_to(True).get().val()
+            users = db.child('users').order_by_child('owner').equal_to(True).get().val()
         if users:
             return(users)
         else:
