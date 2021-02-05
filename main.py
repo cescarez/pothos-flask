@@ -153,7 +153,7 @@ def submit_request():
     else:
         abort(404, 'Invalid endpoint. Request was not saved to the database.')
 
-#user show via backend ID
+#request show via backend ID
 @app.route('/requests/<string:id>', methods=['GET', 'PUT'])
 def request_show(id):
     db = firebase.database()
@@ -197,6 +197,16 @@ def start_chat():
         ))
     else:
         abort(404, 'Invalid endpoint. User profile was not saved to the database.')
+
+#user show via backend ID
+@app.route('/messages/<string:id>', methods=['GET'])
+def message_show(id):
+    db = firebase.database()
+    chat_message = db.child('messages').child(escape(id)).get().val()
+    if chat_message:
+        return(chat_message)
+    else:
+        return({'message': 'No message found'})
 
 
 if __name__ == '__main__':
