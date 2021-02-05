@@ -142,11 +142,11 @@ def submit_request():
             'owner': submitted_data['owner'],
             'sitter': submitted_data['sitter'],
             'status': 'pending',
-            'chatID': '', #how to create a chat_log at the same time?
+            # 'chatID': ''
         }
         db.child('requests').push(new_request)
         return(Response(
-            {'message':'Request was successfully submitted'},
+            {'message':'Request was successfully submitted'}, #message doesn't render
             status=200,
             mimetype='application/json'
         ))
@@ -154,7 +154,7 @@ def submit_request():
         abort(404, 'Invalid endpoint. Request was not saved to the database.')
 
 #user show via backend ID
-@app.route('/users/<string:id>', methods=['GET', 'PUT'])
+@app.route('/requests/<string:id>', methods=['GET', 'PUT'])
 def request_show(id):
     db = firebase.database()
     if request.method == 'GET':
@@ -172,23 +172,26 @@ def request_show(id):
                 'status': submitted_data['status'],
             }
             db.child('requests').child(escape(id)).update(confirm_request)
-            return(confirm_request)
+            return(confirm_request) #success message needed
         else:
             abort(404, 'No request has been made with this ID.')
 
-#sitting request post
-@app.route('/chats', methods=['POST'])
+#chat messages post
+@app.route('/messages', methods=['POST'])
 def start_chat():
     db = firebase.database()
     if request.method == 'POST':
         #assumes JSON format, not form 
         submitted_data = request.get_json()
-        new_chat = {
-            
+        new_message = {
+            'timestamp': str(datetime.utcnow()),
+            'message': submitted_data['message'],
+            'sender': submitted_data['sender'],
+            'request_id': submitted_data['request_id']
         }
-        db.child('requests').push(new_chat)
+        db.child('messages').push(new_message)
         return(Response(
-            {'message':'Chat succesfully started'},
+            {'message':'Message successfully sent'},
             status=200,
             mimetype='application/json'
         ))
