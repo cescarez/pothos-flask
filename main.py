@@ -198,7 +198,7 @@ def start_chat():
     else:
         abort(404, 'Invalid endpoint. User profile was not saved to the database.')
 
-#user show via backend ID
+#chat message show
 @app.route('/messages/<string:id>', methods=['GET'])
 def message_show(id):
     db = firebase.database()
