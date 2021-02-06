@@ -1,4 +1,4 @@
-from flask import Flask, request, Response, abort
+from flask import Flask, request, Response, abort, jsonify
 from flask_cors import CORS, cross_origin
 import os
 from datetime import datetime
@@ -52,13 +52,7 @@ def add_user():
         }
         db.child('users').push(new_user)
 
-        ##return two keys: success message AND new_user that was just posted
-        ##also -- this response object is probably not structured correctly
-        return(Response(
-            {'message':'User profile was successfully added to the database. Check database for posted data.'},
-            status=200,
-            mimetype='application/json'
-        ))
+        return(new_user, 201)
     else:
         abort(404, 'Invalid endpoint. User profile was not saved to the database.')
 
