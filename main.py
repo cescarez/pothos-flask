@@ -1,4 +1,4 @@
-from flask import Flask, request, Response, abort
+from flask import Flask, request, Response, abort, jsonify
 from flask_cors import CORS, cross_origin
 import os
 from datetime import datetime
@@ -35,7 +35,6 @@ def add_user():
             'username': submitted_data['username'],
             'full_name': submitted_data['full_name'],
             'phone_number': submitted_data['phone_number'],
-            'email': submitted_data['email'],
             'address': {
                 'street': submitted_data['address']['street'],
                 'city': submitted_data['address']['city'],
@@ -44,8 +43,6 @@ def add_user():
                 'country': submitted_data['address']['country']
             },
             'avatar_url': submitted_data['avatar_url'],
-            # 'rating': submitted_data['rating'],
-            'chat_history': {},
             'price_rate': {
                 'water_by_plant': float(submitted_data['price_rate']['water_by_plant']) if submitted_data['price_rate']['water_by_plant'] else '',
                 'water_by_time': float(submitted_data['price_rate']['water_by_time'])  if submitted_data['price_rate']['water_by_time'] else '',
@@ -54,25 +51,20 @@ def add_user():
             }
         }
         db.child('users').push(new_user)
-        return(Response(
-            {'message':'User profile was successfully added to the database. Check database for posted data.'},
-            status=200,
-            mimetype='application/json'
-        ))
+
+        return(new_user, 201)
     else:
         abort(404, 'Invalid endpoint. User profile was not saved to the database.')
 
 #sitters and owners indexes
 @app.route('/<string:usertype>', methods=['GET'])
 def users_index(usertype):
-    #does db order change when a patch request is sent? if so, then chain a .order_by_key() as first call
-    usertype = escape(usertype)[0:-1]
     db = firebase.database()
-    if (usertype == 'sitter' or usertype == 'owner'):
-        if usertype == 'sitter':
+    if (usertype == 'sitters' or usertype == 'owners'):
+        if usertype == 'sitters':
             users = db.child('users').order_by_child('sitter').equal_to(True).get().val()
         else:
-            users = db.child('users').order_by_child('sitter').equal_to(True).get().val()
+            users = db.child('users').order_by_child('owner').equal_to(True).get().val()
         if users:
             return(users)
         else:
@@ -120,7 +112,6 @@ def users_show(id):
             return(updated_user)
         else:
             abort(404, 'No user profile has been stored with the entered user ID.')
-        
 
 #user show via frontend ID
 @app.route('/users/current/<string:auth_id>', methods=['GET'])
@@ -131,6 +122,85 @@ def find_user(auth_id):
         return(user)
     else:
         return({'message': 'No user profile has been saved with the logged in user\'s authentication ID.'})
+
+#sitting request post
+@app.route('/requests', methods=['POST'])
+def submit_request():
+    db = firebase.database()
+    if request.method == 'POST':
+        #assumes JSON format, not form 
+        submitted_data = request.get_json()
+        new_request = {
+            'time_requested': str(datetime.utcnow()),
+            'time_confirmed': '',
+            'owner': submitted_data['owner'],
+            'sitter': submitted_data['sitter'],
+            'status': 'pending',
+            # 'chatID': ''
+        }
+        db.child('requests').push(new_request)
+        return(Response(
+            {'message':'Request was successfully submitted'}, #message doesn't render
+            status=200,
+            mimetype='application/json'
+        ))
+    else:
+        abort(404, 'Invalid endpoint. Request was not saved to the database.')
+
+#request show via backend ID
+@app.route('/requests/<string:id>', methods=['GET', 'PUT'])
+def request_show(id):
+    db = firebase.database()
+    if request.method == 'GET':
+        sitting_request = db.child('requests').child(escape(id)).get().val()
+        if sitting_request:
+            return(sitting_request)
+        else:
+            return({'message': 'No request has been made with this ID'})
+    else:
+        submitted_data = request.get_json()
+        sitting_request = db.child('requests').child(escape(id)).get().val()
+        if sitting_request:
+            confirm_request = {
+                'time_confirmed': str(datetime.utcnow()),
+                'status': submitted_data['status'],
+            }
+            db.child('requests').child(escape(id)).update(confirm_request)
+            return(confirm_request) #success message needed
+        else:
+            abort(404, 'No request has been made with this ID.')
+
+#chat messages post
+@app.route('/messages', methods=['POST'])
+def start_chat():
+    db = firebase.database()
+    if request.method == 'POST':
+        #assumes JSON format, not form 
+        submitted_data = request.get_json()
+        new_message = {
+            'timestamp': str(datetime.utcnow()),
+            'message': submitted_data['message'],
+            'sender': submitted_data['sender'],
+            'request_id': submitted_data['request_id']
+        }
+        db.child('messages').push(new_message)
+        return(Response(
+            {'message':'Message successfully sent'},
+            status=200,
+            mimetype='application/json'
+        ))
+    else:
+        abort(404, 'Invalid endpoint. User profile was not saved to the database.')
+
+#chat message show
+@app.route('/messages/<string:id>', methods=['GET'])
+def message_show(id):
+    db = firebase.database()
+    chat_message = db.child('messages').child(escape(id)).get().val()
+    if chat_message:
+        return(chat_message)
+    else:
+        return({'message': 'No message found'})
 
 
 if __name__ == '__main__':
