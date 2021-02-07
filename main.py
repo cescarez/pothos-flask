@@ -172,6 +172,15 @@ def request_show(id):
         else:
             abort(404, 'No request has been made with this ID.')
 
+@app.route('/requests-by-sitter/<string:id>', methods=['GET'])
+def find_requests(id):
+    db = firebase.database()
+    request = db.child('requests').order_by_child('sitter').equal_to(id).get().val()
+    if request:
+        return(request)
+    else:
+        return({'message': 'No requests have been saved with the logged in user\'s ID.'})
+
 #chat messages post
 @app.route('/messages', methods=['POST'])
 def start_chat():
