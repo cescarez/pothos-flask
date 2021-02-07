@@ -136,6 +136,8 @@ def submit_request():
             'owner': submitted_data['owner'],
             'sitter': submitted_data['sitter'],
             'status': 'pending',
+            'owner_rating': '',
+            'sitter_rating': ''
             # 'chatID': ''
         }
         db.child('requests').push(new_request)
