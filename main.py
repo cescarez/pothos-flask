@@ -32,7 +32,6 @@ def add_user():
             'sitter': submitted_data['sitter'],
             'owner': submitted_data['owner'],
             'bio': submitted_data['bio'],
-            'username': submitted_data['username'],
             'full_name': submitted_data['full_name'],
             'phone_number': submitted_data['phone_number'],
             'address': {
@@ -40,7 +39,6 @@ def add_user():
                 'city': submitted_data['address']['city'],
                 'state': submitted_data['address']['state'],
                 'postal_code': submitted_data['address']['postal_code'],
-                'country': submitted_data['address']['country']
             },
             'avatar_url': submitted_data['avatar_url'],
             'price_rate': {
@@ -91,7 +89,6 @@ def users_show(id):
                 'sitter': submitted_data['sitter'],
                 'owner': submitted_data['owner'],
                 'bio': submitted_data['bio'],
-                'username': submitted_data['username'],
                 'full_name': submitted_data['full_name'],
                 'phone_number': submitted_data['phone_number'],
                 'address': {
@@ -99,7 +96,6 @@ def users_show(id):
                     'city': submitted_data['address']['city'],
                     'state': submitted_data['address']['state'],
                     'postal_code': submitted_data['address']['postal_code'],
-                    'country': submitted_data['address']['country']
                 },
                 'price_rate': {
                     'water_by_plant': float(submitted_data['price_rate']['water_by_plant']) if submitted_data['price_rate']['water_by_plant'] else '',
