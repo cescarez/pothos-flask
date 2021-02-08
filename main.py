@@ -32,7 +32,6 @@ def add_user():
             'sitter': submitted_data['sitter'],
             'owner': submitted_data['owner'],
             'bio': submitted_data['bio'],
-            'username': submitted_data['username'],
             'full_name': submitted_data['full_name'],
             'phone_number': submitted_data['phone_number'],
             'address': {
@@ -91,7 +90,6 @@ def users_show(id):
                 'sitter': submitted_data['sitter'],
                 'owner': submitted_data['owner'],
                 'bio': submitted_data['bio'],
-                'username': submitted_data['username'],
                 'full_name': submitted_data['full_name'],
                 'phone_number': submitted_data['phone_number'],
                 'address': {
