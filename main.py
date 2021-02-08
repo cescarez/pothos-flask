@@ -203,6 +203,15 @@ def start_chat():
     else:
         abort(404, 'Invalid endpoint. User profile was not saved to the database.')
 
+@app.route('/messages-by-request/<string:id>', methods=['GET'])
+def find_messages(id):
+    db = firebase.database()
+    message_list = db.child('messages').order_by_child('request_id').equal_to(id).get().val()
+    if message_list:
+        return(message_list)
+    else:
+        return({'message': 'No messages have been saved with the request ID.'})
+
 #chat message show
 @app.route('/messages/<string:id>', methods=['GET'])
 def message_show(id):
