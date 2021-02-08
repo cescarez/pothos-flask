@@ -39,7 +39,6 @@ def add_user():
                 'city': submitted_data['address']['city'],
                 'state': submitted_data['address']['state'],
                 'postal_code': submitted_data['address']['postal_code'],
-                'country': submitted_data['address']['country']
             },
             'avatar_url': submitted_data['avatar_url'],
             'price_rate': {
@@ -97,7 +96,6 @@ def users_show(id):
                     'city': submitted_data['address']['city'],
                     'state': submitted_data['address']['state'],
                     'postal_code': submitted_data['address']['postal_code'],
-                    'country': submitted_data['address']['country']
                 },
                 'price_rate': {
                     'water_by_plant': float(submitted_data['price_rate']['water_by_plant']) if submitted_data['price_rate']['water_by_plant'] else '',
