@@ -133,10 +133,13 @@ def submit_request():
         'status': 'pending',
         'owner_rating': '',
         'sitter_rating': ''
-        # 'chatID': ''
     }
     db.child('requests').push(new_request)
-    return({'message':'Request was successfully submitted'},201)
+    #finds last request by the owner that submitted the request
+    request_id = list(db.child('requests').order_by_child('owner').equal_to(new_request['owner']).limit_to_last(1).get().val().keys())[0]
+    #finds last request by timestamp -- less scalable/reliable
+    # request_id = list(db.child('requests').order_by_child('time_requested').limit_to_last(1).get().val().keys())[0]
+    return({'message':'Request was successfully submitted', 'request_id': request_id},201)
 
 #request show via backend ID
 @app.route('/requests/<string:id>', methods=['GET', 'PUT'])
