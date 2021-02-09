@@ -52,7 +52,7 @@ def add_user():
 
         return(new_user, 201)
     else:
-        abort(404, 'Invalid endpoint. User profile was not saved to the database.')
+        return({'message':'Invalid endpoint. User profile was not saved to the database.'}, 404)
 
 #sitters and owners indexes
 @app.route('/<string:usertype>', methods=['GET'])
@@ -66,9 +66,9 @@ def users_index(usertype):
         if users:
             return(users)
         else:
-            return({'message': 'No {usertype} in database to display.'})
+            return({'message': 'No {usertype} in database to display.'}, 204)
     else:
-        abort(404, 'Invalid endpoint.')
+        return({'message':'Invalid endpoint.'}, 404)
 
 
 #user show via backend ID
@@ -80,7 +80,7 @@ def users_show(id):
         if user:
             return(user)
         else:
-            return({'message': 'No user profile has been stored with the entered user ID.'})
+            return({'message': 'No user profile has been stored with the entered user ID.'}, 404)
     else:
         submitted_data = request.get_json()
         user = db.child('users').child(escape(id)).get().val()
@@ -105,9 +105,9 @@ def users_show(id):
                 }
             }
             db.child('users').child(escape(id)).update(updated_user)
-            return(updated_user)
+            return(updated_user, 200)
         else:
-            abort(404, 'No user profile has been stored with the entered user ID.')
+            return({'message':'No user profile has been stored with the entered user ID.'}, 404)
 
 #user show via frontend ID
 @app.route('/users/current/<string:auth_id>', methods=['GET'])
@@ -115,9 +115,9 @@ def find_user(auth_id):
     db = firebase.database()
     user = db.child('users').order_by_child('auth_id').equal_to(auth_id).get().val()
     if user:
-        return(user)
+        return(user, 200)
     else:
-        return({'message': 'No user profile has been saved with the logged in user\'s authentication ID.'})
+        return({'message':'No user profile has been saved with the logged in user\'s authentication ID.'}, 404)
 
 #sitting request post
 @app.route('/requests', methods=['POST'])
@@ -133,15 +133,11 @@ def submit_request():
         'status': 'pending',
         'owner_rating': '',
         'sitter_rating': ''
-        # 'chatID': ''
     }
     db.child('requests').push(new_request)
-    return(Response(
-        {'message':'Request was successfully submitted'}, #message doesn't render
-        status=200,
-        mimetype='application/json'
-    ))
-
+    #finds last request by the owner that submitted the request
+    request_id = list(db.child('requests').order_by_child('owner').equal_to(new_request['owner']).limit_to_last(1).get().val().keys())[0]
+    return({'message':'Request was successfully submitted', 'request_id': request_id},201)
 
 #request show via backend ID
 @app.route('/requests/<string:id>', methods=['GET', 'PUT'])
@@ -150,9 +146,9 @@ def request_show(id):
     if request.method == 'GET':
         sitting_request = db.child('requests').child(escape(id)).get().val()
         if sitting_request:
-            return(sitting_request)
+            return(sitting_request, 200)
         else:
-            return({'message': 'No request has been made with this ID'})
+            return({'message': 'No request has been made with this ID'}, 204)
     else:
         submitted_data = request.get_json()
         sitting_request = db.child('requests').child(escape(id)).get().val()
@@ -162,9 +158,9 @@ def request_show(id):
                 'status': submitted_data['status'],
             }
             db.child('requests').child(escape(id)).update(confirm_request)
-            return(confirm_request) #success message needed
+            return(confirm_request, 200) #success message needed
         else:
-            abort(404, 'No request has been made with this ID.')
+            return({'message':'No request has been made with this ID.'}, 204)
 
 @app.route('/requests-by-sitter/<string:id>', methods=['GET'])
 def find_requests(id):
@@ -176,9 +172,9 @@ def find_requests(id):
             sitter = db.child('users').child(escape(request_data['sitter'])).get().val()
             request[request_id]['owner_name'] = owner['full_name']
             request[request_id]['sitter_name'] = sitter['full_name']
-        return(request)
+        return(request, 200)
     else:
-        return({'message': 'No requests have been saved with the logged in user\'s ID.'})
+        return({'message': 'No requests have been saved with the logged in user\'s ID.'}, 204)
 
 #chat messages post
 @app.route('/messages', methods=['POST'])
@@ -193,11 +189,7 @@ def start_chat():
         'request_id': submitted_data['request_id']
     }
     db.child('messages').push(new_message)
-    return(Response(
-        {'message':'Message successfully sent'},
-        status=200,
-        mimetype='application/json'
-    ))
+    return({'message':'Message successfully sent'}, 200)
 
 @app.route('/messages-by-request/<string:id>', methods=['GET'])
 def find_messages(id):
@@ -207,9 +199,9 @@ def find_messages(id):
         for message_id, message_data in message_list.items():
             user = db.child('users').child(escape(message_data['sender'])).get().val()
             message_list[message_id]['sender_name'] = user['full_name']
-        return(message_list)
+        return(message_list, 200)
     else:
-        return({'message': 'No messages have been saved with the request ID.'})
+        return({'message': 'No messages have been saved with the request ID.'}, 204)
 
 
 if __name__ == '__main__':
