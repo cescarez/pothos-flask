@@ -123,27 +123,25 @@ def find_user(auth_id):
 @app.route('/requests', methods=['POST'])
 def submit_request():
     db = firebase.database()
-    if request.method == 'POST':
-        #assumes JSON format, not form 
-        submitted_data = request.get_json()
-        new_request = {
-            'time_requested': str(datetime.utcnow()),
-            'time_confirmed': '',
-            'owner': submitted_data['owner'],
-            'sitter': submitted_data['sitter'],
-            'status': 'pending',
-            'owner_rating': '',
-            'sitter_rating': ''
-            # 'chatID': ''
-        }
-        db.child('requests').push(new_request)
-        return(Response(
-            {'message':'Request was successfully submitted'}, #message doesn't render
-            status=200,
-            mimetype='application/json'
-        ))
-    else:
-        abort(404, 'Invalid endpoint. Request was not saved to the database.')
+    #assumes JSON format, not form 
+    submitted_data = request.get_json()
+    new_request = {
+        'time_requested': str(datetime.utcnow()),
+        'time_confirmed': '',
+        'owner': submitted_data['owner'],
+        'sitter': submitted_data['sitter'],
+        'status': 'pending',
+        'owner_rating': '',
+        'sitter_rating': ''
+        # 'chatID': ''
+    }
+    db.child('requests').push(new_request)
+    return(Response(
+        {'message':'Request was successfully submitted'}, #message doesn't render
+        status=200,
+        mimetype='application/json'
+    ))
+
 
 #request show via backend ID
 @app.route('/requests/<string:id>', methods=['GET', 'PUT'])
@@ -173,6 +171,11 @@ def find_requests(id):
     db = firebase.database()
     request = db.child('requests').order_by_child('sitter').equal_to(id).get().val()
     if request:
+        for request_id, request_data in request.items():
+            owner = db.child('users').child(escape(request_data['owner'])).get().val()
+            sitter = db.child('users').child(escape(request_data['sitter'])).get().val()
+            request[request_id]['owner_name'] = owner['full_name']
+            request[request_id]['sitter_name'] = sitter['full_name']
         return(request)
     else:
         return({'message': 'No requests have been saved with the logged in user\'s ID.'})
@@ -181,42 +184,32 @@ def find_requests(id):
 @app.route('/messages', methods=['POST'])
 def start_chat():
     db = firebase.database()
-    if request.method == 'POST':
-        #assumes JSON format, not form 
-        submitted_data = request.get_json()
-        new_message = {
-            'timestamp': str(datetime.utcnow()),
-            'message': submitted_data['message'],
-            'sender': submitted_data['sender'],
-            'request_id': submitted_data['request_id']
-        }
-        db.child('messages').push(new_message)
-        return(Response(
-            {'message':'Message successfully sent'},
-            status=200,
-            mimetype='application/json'
-        ))
-    else:
-        abort(404, 'Invalid endpoint. User profile was not saved to the database.')
+    #assumes JSON format, not form 
+    submitted_data = request.get_json()
+    new_message = {
+        'timestamp': str(datetime.utcnow()),
+        'message': submitted_data['message'],
+        'sender': submitted_data['sender'],
+        'request_id': submitted_data['request_id']
+    }
+    db.child('messages').push(new_message)
+    return(Response(
+        {'message':'Message successfully sent'},
+        status=200,
+        mimetype='application/json'
+    ))
 
 @app.route('/messages-by-request/<string:id>', methods=['GET'])
 def find_messages(id):
     db = firebase.database()
     message_list = db.child('messages').order_by_child('request_id').equal_to(id).get().val()
     if message_list:
+        for message_id, message_data in message_list.items():
+            user = db.child('users').child(escape(message_data['sender'])).get().val()
+            message_list[message_id]['sender_name'] = user['full_name']
         return(message_list)
     else:
         return({'message': 'No messages have been saved with the request ID.'})
-
-#chat message show
-@app.route('/messages/<string:id>', methods=['GET'])
-def message_show(id):
-    db = firebase.database()
-    chat_message = db.child('messages').child(escape(id)).get().val()
-    if chat_message:
-        return(chat_message)
-    else:
-        return({'message': 'No message found'})
 
 
 if __name__ == '__main__':
