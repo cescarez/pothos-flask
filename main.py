@@ -52,7 +52,7 @@ def add_user():
 
         return(new_user, 201)
     else:
-        return({'messag':'Invalid endpoint. User profile was not saved to the database.'}, 404)
+        return({'message':'Invalid endpoint. User profile was not saved to the database.'}, 404)
 
 #sitters and owners indexes
 @app.route('/<string:usertype>', methods=['GET'])
