@@ -126,7 +126,6 @@ def submit_request():
     db = firebase.database()
     #assumes JSON format, not form 
     submitted_data = request.get_json()
-    print(submitted_data)
     new_request = {
         'time_requested': str(datetime.utcnow()),
         'time_confirmed': '',
@@ -235,7 +234,6 @@ def send_message():
     db = firebase.database()
     #assumes JSON format, not form 
     submitted_data = request.get_json()
-    print(submitted_data)
     new_message = {
         'timestamp': str(datetime.utcnow()),
         'message': submitted_data['message'],
