@@ -217,7 +217,11 @@ def find_requests(id):
 def user_requests(id):
     db = firebase.database()
     request = db.child('requests').order_by_child('owner').equal_to(id).get().val()
-    request.update(db.child('requests').order_by_child('sitter').equal_to(id).get().val())
+    if request:
+        request.update(db.child('requests').order_by_child('sitter').equal_to(id).get().val())
+    else:
+        request = db.child('requests').order_by_child('sitter').equal_to(id).get().val()
+        request.update(db.child('requests').order_by_child('owner').equal_to(id).get().val())
     if request:
         for request_id, request_data in request.items():
             owner = db.child('users').child(escape(request_data['owner'])).get().val()
