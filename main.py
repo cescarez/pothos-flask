@@ -214,6 +214,21 @@ def find_requests(id):
     else:
         return({'message': 'No requests have been saved with the logged in user\'s ID.'}, 204)
 
+@app.route('/requests-by-user/<string:id>', methods=['GET'])
+def user_requests(id):
+    db = firebase.database()
+    request = db.child('requests').order_by_child('owner').equal_to(id).get().val()
+    request.update(db.child('requests').order_by_child('sitter').equal_to(id).get().val())
+    if request:
+        for request_id, request_data in request.items():
+            owner = db.child('users').child(escape(request_data['owner'])).get().val()
+            sitter = db.child('users').child(escape(request_data['sitter'])).get().val()
+            request[request_id]['owner_name'] = owner['full_name']
+            request[request_id]['sitter_name'] = sitter['full_name']
+        return(request, 200)
+    else:
+        return({'message': 'No requests have been saved with the logged in user\'s ID.'}, 204)
+
 #chat messages post
 @app.route('/messages', methods=['POST'])
 def send_message():
