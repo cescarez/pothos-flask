@@ -131,11 +131,18 @@ def submit_request():
         'owner': submitted_data['owner'],
         'sitter': submitted_data['sitter'],
         'status': 'pending',
+        'date_of_service': submitted_data['date_of_service'],
+        'services': {
+            'water_by_plant': submitted_data['services']['water_by_plant'],
+            'water_by_time': submitted_data['services']['water_by_time'],
+            'repot_by_plant': submitted_data['services']['repot_by_plant'],
+            'repot_by_time': submitted_data['services']['repot_by_time'],
+        },
         'owner_rating': '',
-        'sitter_rating': ''
+        'sitter_rating': '',
     }
     db.child('requests').push(new_request)
-    #finds last request by the owner that submitted the request
+    # finds last request by the owner that submitted the request
     request_id = list(db.child('requests').order_by_child('owner').equal_to(new_request['owner']).limit_to_last(1).get().val().keys())[0]
     return({'message':'Request was successfully submitted', 'request_id': request_id},201)
 
