@@ -119,6 +119,7 @@ def find_user(auth_id):
     else:
         return({'message':'No user profile has been saved with the logged in user\'s authentication ID.'}, 404)
 
+
 #sitting request post
 @app.route('/requests', methods=['POST'])
 def submit_request():
@@ -131,13 +132,49 @@ def submit_request():
         'owner': submitted_data['owner'],
         'sitter': submitted_data['sitter'],
         'status': 'pending',
+        'date_of_service': submitted_data.get('date_of_service'),
+        'services': {
+            'water_by_plant': submitted_data['services']['water_by_plant'],
+            'water_by_time': submitted_data['services']['water_by_time'],
+            'repot_by_plant': submitted_data['services']['repot_by_plant'],
+            'repot_by_time': submitted_data['services']['repot_by_time'],
+        },
         'owner_rating': '',
-        'sitter_rating': ''
+        'sitter_rating': '',
     }
-    db.child('requests').push(new_request)
-    #finds last request by the owner that submitted the request
-    request_id = list(db.child('requests').order_by_child('owner').equal_to(new_request['owner']).limit_to_last(1).get().val().keys())[0]
-    return({'message':'Request was successfully submitted', 'request_id': request_id},201)
+    postedRequest = db.child('requests').push(new_request)
+    # print(postedRequest['name']) #this is the newly pushed/generated request ID
+    start_chat(postedRequest['name'], new_request)
+
+    return({'message':'Request was successfully submitted'},201)
+#first message that initializes chat, sent with request
+def start_chat(request_id, request):
+    db = firebase.database()
+    #for string interpolation and more descriptive request messaging.... to be implemented... not now.
+    watering_count = request['services']['water_by_plant']
+    watering_hours = int(request['services']['water_by_time']) * 0.5
+    repotting_count = request['services']['repot_by_plant']
+    repotting_hours = int(request['services']['repot_by_time']) * 0.5
+    watering = watering_count or watering_hours
+    repotting = repotting_count or repotting_hours
+
+    if (watering and repotting):
+        message = 'Hey bud (pun intended), are you available for watering and plant sitting services?'
+    elif(watering):
+        message = 'Hey bud (pun intended), are you available to watering services ()?'
+    elif (repotting):
+        message = 'Hey bud (pun intended), are you available for repotting services?'
+    else:
+        message = 'Hey bud (pun intended), just sayin\' hi :).'
+
+    new_message = {
+        'timestamp': str(datetime.utcnow()),
+        'message': message,
+        'sender': request['owner'],
+        'request_id': request_id 
+    }
+    db.child('messages').push(new_message)
+    return({'message':'Message successfully sent'})
 
 #request show via backend ID
 @app.route('/requests/<string:id>', methods=['GET', 'PUT'])
@@ -176,9 +213,24 @@ def find_requests(id):
     else:
         return({'message': 'No requests have been saved with the logged in user\'s ID.'}, 204)
 
+@app.route('/requests-by-user/<string:id>', methods=['GET'])
+def user_requests(id):
+    db = firebase.database()
+    request = db.child('requests').order_by_child('owner').equal_to(id).get().val()
+    request.update(db.child('requests').order_by_child('sitter').equal_to(id).get().val())
+    if request:
+        for request_id, request_data in request.items():
+            owner = db.child('users').child(escape(request_data['owner'])).get().val()
+            sitter = db.child('users').child(escape(request_data['sitter'])).get().val()
+            request[request_id]['owner_name'] = owner['full_name']
+            request[request_id]['sitter_name'] = sitter['full_name']
+        return(request, 200)
+    else:
+        return({'message': 'No requests have been saved with the logged in user\'s ID.'}, 204)
+
 #chat messages post
 @app.route('/messages', methods=['POST'])
-def start_chat():
+def send_message():
     db = firebase.database()
     #assumes JSON format, not form 
     submitted_data = request.get_json()
