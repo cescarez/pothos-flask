@@ -161,7 +161,7 @@ def start_chat(request_id, request):
     if (watering and repotting):
         message = 'Hey bud (pun intended), are you available for watering and plant sitting services?'
     elif(watering):
-        message = 'Hey bud (pun intended), are you available to watering services ()?'
+        message = 'Hey bud (pun intended), are you available for watering services?'
     elif (repotting):
         message = 'Hey bud (pun intended), are you available for repotting services?'
     else:
