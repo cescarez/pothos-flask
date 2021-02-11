@@ -1,14 +1,14 @@
 from flask import Flask, request, Response, abort, jsonify
 from flask_cors import CORS, cross_origin
 import os
-# import stripe
+import stripe
 from datetime import datetime
 from markupsafe import escape
 from pyrebase import pyrebase
 from dotenv import load_dotenv
 
 load_dotenv()
-# stripe.api_key='FLASK_APP_STRIPE_API_KEY'
+stripe.api_key = os.getenv('FLASK_APP_STRIPE_API_KEY')
 config = {
     'apiKey': os.getenv('FLASK_APP_FIREBASE_API_KEY'),
     'authDomain': os.getenv('FLASK_APP_FIREBASE_AUTH_DOMAIN'),
@@ -227,7 +227,8 @@ def user_requests(id):
         request.update(db.child('requests').order_by_child('sitter').equal_to(id).get().val())
     else:
         request = db.child('requests').order_by_child('sitter').equal_to(id).get().val()
-        request.update(db.child('requests').order_by_child('owner').equal_to(id).get().val())
+        if request:
+            request.update(db.child('requests').order_by_child('owner').equal_to(id).get().val())
     if request:
         for request_id, request_data in request.items():
             owner = db.child('users').child(escape(request_data['owner'])).get().val()
@@ -311,11 +312,11 @@ def get_user_ratings(id):
     sitter_rating = None
 
     if owner_requests:
-        owner_ratings = [request.get('owner_rating') for request in owner_requests.values() if request.get('owner_rating')]
+        owner_ratings = [int(request.get('owner_rating')) for request in owner_requests.values() if request.get('owner_rating')]
         if owner_ratings:
             owner_rating = sum(owner_ratings)/len(owner_ratings)
     if sitter_requests:
-        sitter_ratings = [request.get('sitter_rating') for request in sitter_requests.values() if request.get('sitter_rating')]
+        sitter_ratings = [int(request.get('sitter_rating')) for request in sitter_requests.values() if request.get('sitter_rating')]
         if sitter_ratings:
             sitter_rating = sum(sitter_ratings)/len(sitter_ratings)
 
@@ -324,7 +325,34 @@ def get_user_ratings(id):
     else:
         return({'message': 'No requests have been saved with the logged in user\'s ID.'}, 204)
 
-if __name__ == '__main__':
-    print('This file has been run as main')
-else:
-    print('This file has been imported as a module.')
+
+# @app.route('/create-checkout-session', methods=['POST'])
+# def create_checkout_session():
+#     try:
+#         checkout_session = stripe.checkout.Session.create(
+#             payment_method_types=['card'],
+#             line_items=[
+#                 {
+#                     'price_data': {
+#                         'currency': 'usd',
+#                         'unit_amount': 2000,
+#                         'product_data': {
+#                             'name': 'Stubborn Attachments',
+#                             'images': ['https://i.imgur.com/EHyR2nP.png'],
+#                         },
+#                     },
+#                     'quantity': 1,
+#                 },
+#             ],
+#             mode='payment',
+#             success_url=YOUR_DOMAIN + '?success=true',
+#             cancel_url=YOUR_DOMAIN + '?canceled=true',
+#         )
+#         return jsonify({'id': checkout_session.id})
+#     except Exception as e:
+#         return jsonify(error=str(e)), 403
+
+# if __name__ == '__main__':
+#     print('This file has been run as main')
+# else:
+#     print('This file has been imported as a module.')
