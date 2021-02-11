@@ -1,13 +1,14 @@
 from flask import Flask, request, Response, abort, jsonify
 from flask_cors import CORS, cross_origin
 import os
+# import stripe
 from datetime import datetime
 from markupsafe import escape
 from pyrebase import pyrebase
 from dotenv import load_dotenv
 
 load_dotenv()
-
+# stripe.api_key='FLASK_APP_STRIPE_API_KEY'
 config = {
     'apiKey': os.getenv('FLASK_APP_FIREBASE_API_KEY'),
     'authDomain': os.getenv('FLASK_APP_FIREBASE_AUTH_DOMAIN'),
