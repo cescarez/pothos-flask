@@ -78,6 +78,10 @@ def users_show(id):
     if request.method == 'GET':
         user = db.child('users').child(escape(id)).get().val()
         if user:
+            user_ratings = get_user_ratings(id)[0]
+            print(user_ratings)
+            user.update({'sitter_rating': user_ratings.get('sitter_rating'), 'owner_rating': user_ratings.get('owner_rating')})
+
             return(user)
         else:
             return({'message': 'No user profile has been stored with the entered user ID.'}, 404)
