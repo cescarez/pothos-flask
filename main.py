@@ -259,6 +259,17 @@ def find_messages(id):
     else:
         return({'message': 'No messages have been saved with the request ID.'}, 204)
 
+#ratings post/request put
+@app.route('/ratings/<string:id>', methods=['POST'])
+def set_rating(id):
+    db = firebase.database()
+    submitted_data = request.get_json()
+    sitting_request = db.child('requests').child(escape(id)).get().val()
+    if sitting_request:
+        db.child('requests').child(escape(id)).update(submitted_data)
+        return(sitting_request, 200) #success message needed
+    else:
+        return({'message':'No request has been made with this ID.'}, 204)
 
 if __name__ == '__main__':
     print('This file has been run as main')
