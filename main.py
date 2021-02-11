@@ -1,13 +1,14 @@
 from flask import Flask, request, Response, abort, jsonify
 from flask_cors import CORS, cross_origin
 import os
+# import stripe
 from datetime import datetime
 from markupsafe import escape
 from pyrebase import pyrebase
 from dotenv import load_dotenv
 
 load_dotenv()
-
+# stripe.api_key='FLASK_APP_STRIPE_API_KEY'
 config = {
     'apiKey': os.getenv('FLASK_APP_FIREBASE_API_KEY'),
     'authDomain': os.getenv('FLASK_APP_FIREBASE_AUTH_DOMAIN'),
@@ -64,6 +65,9 @@ def users_index(usertype):
         else:
             users = db.child('users').order_by_child('owner').equal_to(True).get().val()
         if users:
+            for user_id, user_data in users.items():
+                user_ratings = get_user_ratings(user_id)[0]
+                user_data.update({'sitter_rating': user_ratings.get('sitter_rating'), 'owner_rating': user_ratings.get('owner_rating')})
             return(users)
         else:
             return({'message': 'No {usertype} in database to display.'}, 204)
@@ -78,6 +82,8 @@ def users_show(id):
     if request.method == 'GET':
         user = db.child('users').child(escape(id)).get().val()
         if user:
+            user_ratings = get_user_ratings(id)[0]
+            user.update({'sitter_rating': user_ratings.get('sitter_rating'), 'owner_rating': user_ratings.get('owner_rating')})
             return(user)
         else:
             return({'message': 'No user profile has been stored with the entered user ID.'}, 404)
@@ -161,7 +167,7 @@ def start_chat(request_id, request):
     if (watering and repotting):
         message = 'Hey bud (pun intended), are you available for watering and plant sitting services?'
     elif(watering):
-        message = 'Hey bud (pun intended), are you available to watering services ()?'
+        message = 'Hey bud (pun intended), are you available for watering services?'
     elif (repotting):
         message = 'Hey bud (pun intended), are you available for repotting services?'
     else:
@@ -241,8 +247,10 @@ def send_message():
     new_message = {
         'timestamp': str(datetime.utcnow()),
         'message': submitted_data['message'],
-        'sender': submitted_data['sender'],
-        'request_id': submitted_data['request_id']
+        'sender': submitted_data.get('sender'),
+        'request_id': submitted_data['request_id'],
+        'photo': submitted_data['photo'],
+        'photo_url': submitted_data['photo_url']
     }
     db.child('messages').push(new_message)
     return({'message':'Message successfully sent'}, 200)
@@ -259,6 +267,62 @@ def find_messages(id):
     else:
         return({'message': 'No messages have been saved with the request ID.'}, 204)
 
+@app.route('/photos', methods=['POST'])
+def upload_photos():
+    db = firebase.database()
+    #assumes JSON format, not form 
+    submitted_data = request.get_json()
+    new_photo = {
+        'timestamp': str(datetime.utcnow()),
+        'photo_url': submitted_data['photo_url'],
+        'request_id': submitted_data['request_id']
+    }
+    db.child('photos').push(new_photo)
+    return({'message':'Photo successfully saved'}, 200)
+
+@app.route('/photos-by-request/<string:id>', methods=['GET'])
+def find_photos(id):
+    db = firebase.database()
+    photo_list = db.child('photos').order_by_child('request_id').equal_to(id).get().val()
+    if photo_list:
+        return(photo_list, 200)
+    else:
+        return({'message': 'No photos have been saved with the request ID.'}, 204)
+
+#ratings post/request put
+@app.route('/ratings/<string:id>', methods=['POST'])
+def submit_rating(id):
+    db = firebase.database()
+    submitted_data = request.get_json()
+    sitting_request = db.child('requests').child(escape(id)).get().val()
+    if sitting_request:
+        db.child('requests').child(escape(id)).update(submitted_data)
+        return(sitting_request, 200) #success message needed
+    else:
+        return({'message':'No request has been made with this ID.'}, 204)
+
+#get ratings by userID
+@app.route('/ratings/<string:id>')
+def get_user_ratings(id):
+    db = firebase.database()
+    owner_requests = db.child('requests').order_by_child('owner').equal_to(id).get().val()
+    sitter_requests = db.child('requests').order_by_child('sitter').equal_to(id).get().val()
+    owner_rating = None
+    sitter_rating = None
+
+    if owner_requests:
+        owner_ratings = [request.get('owner_rating') for request in owner_requests.values() if request.get('owner_rating')]
+        if owner_ratings:
+            owner_rating = sum(owner_ratings)/len(owner_ratings)
+    if sitter_requests:
+        sitter_ratings = [request.get('sitter_rating') for request in sitter_requests.values() if request.get('sitter_rating')]
+        if sitter_ratings:
+            sitter_rating = sum(sitter_ratings)/len(sitter_ratings)
+
+    if sitter_requests or owner_requests:
+        return({'sitter_rating': sitter_rating, 'owner_rating': owner_rating}, 200)
+    else:
+        return({'message': 'No requests have been saved with the logged in user\'s ID.'}, 204)
 
 if __name__ == '__main__':
     print('This file has been run as main')
