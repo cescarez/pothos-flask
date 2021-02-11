@@ -273,6 +273,15 @@ def upload_photos():
     db.child('photos').push(new_photo)
     return({'message':'Photo successfully saved'}, 200)
 
+@app.route('/photos-by-request/<string:id>', methods=['GET'])
+def find_photos(id):
+    db = firebase.database()
+    photo_list = db.child('photos').order_by_child('request_id').equal_to(id).get().val()
+    if photo_list:
+        return(photo_list, 200)
+    else:
+        return({'message': 'No photos have been saved with the request ID.'}, 204)
+
 
 if __name__ == '__main__':
     print('This file has been run as main')
