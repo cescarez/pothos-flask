@@ -1,14 +1,14 @@
 from flask import Flask, request, Response, abort, jsonify
 from flask_cors import CORS, cross_origin
 import os
-# import stripe
+import stripe
 from datetime import datetime
 from markupsafe import escape
 from pyrebase import pyrebase
 from dotenv import load_dotenv
 
 load_dotenv()
-# stripe.api_key='FLASK_APP_STRIPE_API_KEY'
+stripe.api_key = os.getenv('FLASK_APP_STRIPE_API_KEY')
 config = {
     'apiKey': os.getenv('FLASK_APP_FIREBASE_API_KEY'),
     'authDomain': os.getenv('FLASK_APP_FIREBASE_AUTH_DOMAIN'),
@@ -323,6 +323,33 @@ def get_user_ratings(id):
         return({'sitter_rating': sitter_rating, 'owner_rating': owner_rating}, 200)
     else:
         return({'message': 'No requests have been saved with the logged in user\'s ID.'}, 204)
+
+
+@app.route('/create-checkout-session', methods=['POST'])
+def create_checkout_session():
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': 'usd',
+                        'unit_amount': 2000,
+                        'product_data': {
+                            'name': 'Stubborn Attachments',
+                            'images': ['https://i.imgur.com/EHyR2nP.png'],
+                        },
+                    },
+                    'quantity': 1,
+                },
+            ],
+            mode='payment',
+            success_url=YOUR_DOMAIN + '?success=true',
+            cancel_url=YOUR_DOMAIN + '?canceled=true',
+        )
+        return jsonify({'id': checkout_session.id})
+    except Exception as e:
+        return jsonify(error=str(e)), 403
 
 if __name__ == '__main__':
     print('This file has been run as main')
