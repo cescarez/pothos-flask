@@ -64,6 +64,9 @@ def users_index(usertype):
         else:
             users = db.child('users').order_by_child('owner').equal_to(True).get().val()
         if users:
+            for user_id, user_data in users.items():
+                user_ratings = get_user_ratings(user_id)[0]
+                user_data.update({'sitter_rating': user_ratings.get('sitter_rating'), 'owner_rating': user_ratings.get('owner_rating')})
             return(users)
         else:
             return({'message': 'No {usertype} in database to display.'}, 204)
@@ -78,6 +81,8 @@ def users_show(id):
     if request.method == 'GET':
         user = db.child('users').child(escape(id)).get().val()
         if user:
+            user_ratings = get_user_ratings(id)[0]
+            user.update({'sitter_rating': user_ratings.get('sitter_rating'), 'owner_rating': user_ratings.get('owner_rating')})
             return(user)
         else:
             return({'message': 'No user profile has been stored with the entered user ID.'}, 404)
@@ -283,6 +288,40 @@ def find_photos(id):
     else:
         return({'message': 'No photos have been saved with the request ID.'}, 204)
 
+#ratings post/request put
+@app.route('/ratings/<string:id>', methods=['POST'])
+def submit_rating(id):
+    db = firebase.database()
+    submitted_data = request.get_json()
+    sitting_request = db.child('requests').child(escape(id)).get().val()
+    if sitting_request:
+        db.child('requests').child(escape(id)).update(submitted_data)
+        return(sitting_request, 200) #success message needed
+    else:
+        return({'message':'No request has been made with this ID.'}, 204)
+
+#get ratings by userID
+@app.route('/ratings/<string:id>')
+def get_user_ratings(id):
+    db = firebase.database()
+    owner_requests = db.child('requests').order_by_child('owner').equal_to(id).get().val()
+    sitter_requests = db.child('requests').order_by_child('sitter').equal_to(id).get().val()
+    owner_rating = None
+    sitter_rating = None
+
+    if owner_requests:
+        owner_ratings = [request.get('owner_rating') for request in owner_requests.values() if request.get('owner_rating')]
+        if owner_ratings:
+            owner_rating = sum(owner_ratings)/len(owner_ratings)
+    if sitter_requests:
+        sitter_ratings = [request.get('sitter_rating') for request in sitter_requests.values() if request.get('sitter_rating')]
+        if sitter_ratings:
+            sitter_rating = sum(sitter_ratings)/len(sitter_ratings)
+
+    if sitter_requests or owner_requests:
+        return({'sitter_rating': sitter_rating, 'owner_rating': owner_rating}, 200)
+    else:
+        return({'message': 'No requests have been saved with the logged in user\'s ID.'}, 204)
 
 if __name__ == '__main__':
     print('This file has been run as main')
