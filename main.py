@@ -1,13 +1,14 @@
 from flask import Flask, request, Response, abort, jsonify
 from flask_cors import CORS, cross_origin
 import os
+# import stripe
 from datetime import datetime
 from markupsafe import escape
 from pyrebase import pyrebase
 from dotenv import load_dotenv
 
 load_dotenv()
-
+# stripe.api_key='FLASK_APP_STRIPE_API_KEY'
 config = {
     'apiKey': os.getenv('FLASK_APP_FIREBASE_API_KEY'),
     'authDomain': os.getenv('FLASK_APP_FIREBASE_AUTH_DOMAIN'),
@@ -246,8 +247,10 @@ def send_message():
     new_message = {
         'timestamp': str(datetime.utcnow()),
         'message': submitted_data['message'],
-        'sender': submitted_data['sender'],
-        'request_id': submitted_data['request_id']
+        'sender': submitted_data.get('sender'),
+        'request_id': submitted_data['request_id'],
+        'photo': submitted_data['photo'],
+        'photo_url': submitted_data['photo_url']
     }
     db.child('messages').push(new_message)
     return({'message':'Message successfully sent'}, 200)
@@ -263,6 +266,28 @@ def find_messages(id):
         return(message_list, 200)
     else:
         return({'message': 'No messages have been saved with the request ID.'}, 204)
+
+@app.route('/photos', methods=['POST'])
+def upload_photos():
+    db = firebase.database()
+    #assumes JSON format, not form 
+    submitted_data = request.get_json()
+    new_photo = {
+        'timestamp': str(datetime.utcnow()),
+        'photo_url': submitted_data['photo_url'],
+        'request_id': submitted_data['request_id']
+    }
+    db.child('photos').push(new_photo)
+    return({'message':'Photo successfully saved'}, 200)
+
+@app.route('/photos-by-request/<string:id>', methods=['GET'])
+def find_photos(id):
+    db = firebase.database()
+    photo_list = db.child('photos').order_by_child('request_id').equal_to(id).get().val()
+    if photo_list:
+        return(photo_list, 200)
+    else:
+        return({'message': 'No photos have been saved with the request ID.'}, 204)
 
 #ratings post/request put
 @app.route('/ratings/<string:id>', methods=['POST'])
