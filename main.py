@@ -64,6 +64,9 @@ def users_index(usertype):
         else:
             users = db.child('users').order_by_child('owner').equal_to(True).get().val()
         if users:
+            for user_id, user_data in users.items():
+                user_ratings = get_user_ratings(user_id)[0]
+                user_data.update({'sitter_rating': user_ratings.get('sitter_rating'), 'owner_rating': user_ratings.get('owner_rating')})
             return(users)
         else:
             return({'message': 'No {usertype} in database to display.'}, 204)
@@ -79,9 +82,7 @@ def users_show(id):
         user = db.child('users').child(escape(id)).get().val()
         if user:
             user_ratings = get_user_ratings(id)[0]
-            print(user_ratings)
             user.update({'sitter_rating': user_ratings.get('sitter_rating'), 'owner_rating': user_ratings.get('owner_rating')})
-
             return(user)
         else:
             return({'message': 'No user profile has been stored with the entered user ID.'}, 404)
@@ -286,10 +287,12 @@ def get_user_ratings(id):
 
     if owner_requests:
         owner_ratings = [request.get('owner_rating') for request in owner_requests.values() if request.get('owner_rating')]
-        owner_rating = sum(owner_ratings)/len(owner_ratings)
+        if owner_ratings:
+            owner_rating = sum(owner_ratings)/len(owner_ratings)
     if sitter_requests:
         sitter_ratings = [request.get('sitter_rating') for request in sitter_requests.values() if request.get('sitter_rating')]
-        sitter_rating = sum(sitter_ratings)/len(sitter_ratings)
+        if sitter_ratings:
+            sitter_rating = sum(sitter_ratings)/len(sitter_ratings)
 
     if sitter_requests or owner_requests:
         return({'sitter_rating': sitter_rating, 'owner_rating': owner_rating}, 200)
