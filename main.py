@@ -241,8 +241,10 @@ def send_message():
     new_message = {
         'timestamp': str(datetime.utcnow()),
         'message': submitted_data['message'],
-        'sender': submitted_data['sender'],
-        'request_id': submitted_data['request_id']
+        'sender': submitted_data.get('sender'),
+        'request_id': submitted_data['request_id'],
+        'photo': submitted_data['photo'],
+        'photo_url': submitted_data['photo_url']
     }
     db.child('messages').push(new_message)
     return({'message':'Message successfully sent'}, 200)
