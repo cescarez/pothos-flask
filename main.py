@@ -261,7 +261,7 @@ def find_messages(id):
 
 #ratings post/request put
 @app.route('/ratings/<string:id>', methods=['POST'])
-def set_rating(id):
+def submit_rating(id):
     db = firebase.database()
     submitted_data = request.get_json()
     sitting_request = db.child('requests').child(escape(id)).get().val()
@@ -270,6 +270,25 @@ def set_rating(id):
         return(sitting_request, 200) #success message needed
     else:
         return({'message':'No request has been made with this ID.'}, 204)
+
+#get ratings by userID
+@app.route('/ratings/<string:id>')
+def get_user_ratings(id):
+    db = firebase.database()
+    owner_requests = db.child('requests').order_by_child('owner').equal_to(id).get().val()
+    sitter_requests = db.child('requests').order_by_child('sitter').equal_to(id).get().val()
+    owner_rating = None
+    sitter_rating = None
+
+    if owner_requests:
+        owner_rating = sum([request.get('owner_rating') for request in owner_requests.values() if request and request.get('owner_rating')])
+    if sitter_requests:
+        sitter_rating = sum([request.get('sitter_rating') for request in sitter_requests.values() if request and request.get('sitter_rating')])
+
+    if sitter_requests:
+        return({'sitter_rating': sitter_rating, 'owner_rating': owner_rating}, 200)
+    else:
+        return({'message': 'No requests have been saved with the logged in user\'s ID.'}, 204)
 
 if __name__ == '__main__':
     print('This file has been run as main')
