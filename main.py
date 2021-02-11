@@ -281,11 +281,13 @@ def get_user_ratings(id):
     sitter_rating = None
 
     if owner_requests:
-        owner_rating = sum([request.get('owner_rating') for request in owner_requests.values() if request and request.get('owner_rating')])
+        owner_ratings = [request.get('owner_rating') for request in owner_requests.values() if request.get('owner_rating')]
+        owner_rating = sum(owner_ratings)/len(owner_ratings)
     if sitter_requests:
-        sitter_rating = sum([request.get('sitter_rating') for request in sitter_requests.values() if request and request.get('sitter_rating')])
+        sitter_ratings = [request.get('sitter_rating') for request in sitter_requests.values() if request.get('sitter_rating')]
+        sitter_rating = sum(sitter_ratings)/len(sitter_ratings)
 
-    if sitter_requests:
+    if sitter_requests or owner_requests:
         return({'sitter_rating': sitter_rating, 'owner_rating': owner_rating}, 200)
     else:
         return({'message': 'No requests have been saved with the logged in user\'s ID.'}, 204)
