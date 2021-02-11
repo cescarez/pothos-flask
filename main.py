@@ -269,7 +269,6 @@ def upload_photos():
     new_photo = {
         'timestamp': str(datetime.utcnow()),
         'photo_url': submitted_data['photo_url'],
-        'sender': submitted_data['sender'],
         'request_id': submitted_data['request_id']
     }
     db.child('photos').push(new_photo)
