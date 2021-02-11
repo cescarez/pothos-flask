@@ -259,6 +259,20 @@ def find_messages(id):
     else:
         return({'message': 'No messages have been saved with the request ID.'}, 204)
 
+@app.route('/photos', methods=['POST'])
+def upload_photos():
+    db = firebase.database()
+    #assumes JSON format, not form 
+    submitted_data = request.get_json()
+    new_photo = {
+        'timestamp': str(datetime.utcnow()),
+        'photo_url': submitted_data['photo_url'],
+        'sender': submitted_data['sender'],
+        'request_id': submitted_data['request_id']
+    }
+    db.child('photos').push(new_photo)
+    return({'message':'Photo successfully saved'}, 200)
+
 
 if __name__ == '__main__':
     print('This file has been run as main')
