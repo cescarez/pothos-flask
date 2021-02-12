@@ -19,6 +19,7 @@ config = {
 app = Flask(__name__)
 CORS(app, support_credentials=True)
 firebase = pyrebase.initialize_app(config)
+YOUR_DOMAIN = 'http://localhost:3000/checkout'
 
 #user post
 @app.route('/users', methods=['POST'])
@@ -326,31 +327,31 @@ def get_user_ratings(id):
         return({'message': 'No requests have been saved with the logged in user\'s ID.'}, 204)
 
 
-# @app.route('/create-checkout-session', methods=['POST'])
-# def create_checkout_session():
-#     try:
-#         checkout_session = stripe.checkout.Session.create(
-#             payment_method_types=['card'],
-#             line_items=[
-#                 {
-#                     'price_data': {
-#                         'currency': 'usd',
-#                         'unit_amount': 2000,
-#                         'product_data': {
-#                             'name': 'Stubborn Attachments',
-#                             'images': ['https://i.imgur.com/EHyR2nP.png'],
-#                         },
-#                     },
-#                     'quantity': 1,
-#                 },
-#             ],
-#             mode='payment',
-#             success_url=YOUR_DOMAIN + '?success=true',
-#             cancel_url=YOUR_DOMAIN + '?canceled=true',
-#         )
-#         return jsonify({'id': checkout_session.id})
-#     except Exception as e:
-#         return jsonify(error=str(e)), 403
+@app.route('/create-checkout-session', methods=['POST'])
+def create_checkout_session():
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': 'usd',
+                        'unit_amount': 2000,
+                        'product_data': {
+                            'name': 'Stubborn Attachments',
+                            'images': ['https://i.imgur.com/EHyR2nP.png'],
+                        },
+                    },
+                    'quantity': 1,
+                },
+            ],
+            mode='payment',
+            success_url=YOUR_DOMAIN + '?success=true',
+            cancel_url=YOUR_DOMAIN + '?canceled=true',
+        )
+        return jsonify({'id': checkout_session.id})
+    except Exception as e:
+        return jsonify(error=str(e)), 403
 
 # if __name__ == '__main__':
 #     print('This file has been run as main')
