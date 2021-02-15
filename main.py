@@ -113,7 +113,7 @@ def users_show(id):
                     'lat': submitted_data['address_coords']['lat'],
                     'lng': submitted_data['address_coords']['lng']
                 },
-                #add avatar_url?
+                'avatar_url': submitted_data['avatar_url'],
                 'price_rate': {
                     'water_by_plant': float(submitted_data['price_rate']['water_by_plant']) if submitted_data['price_rate']['water_by_plant'] else '',
                     'water_by_time': float(submitted_data['price_rate']['water_by_time'])  if submitted_data['price_rate']['water_by_time'] else '',
