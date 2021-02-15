@@ -42,6 +42,10 @@ def add_user():
                 'state': submitted_data['address']['state'],
                 'postal_code': submitted_data['address']['postal_code'],
             },
+            'address_coords': {
+                'lat': submitted_data['address_coords']['lat'],
+                'lng': submitted_data['address_coords']['lng']
+            },
             'avatar_url': submitted_data['avatar_url'],
             'price_rate': {
                 'water_by_plant': float(submitted_data['price_rate']['water_by_plant']) if submitted_data['price_rate']['water_by_plant'] else '',
@@ -50,6 +54,7 @@ def add_user():
                 'repot_by_time': float(submitted_data['price_rate']['repot_by_time']) if submitted_data['price_rate']['repot_by_time'] else ''
             }
         }
+        print(new_user)
         db.child('users').push(new_user)
 
         return(new_user, 201)
@@ -104,6 +109,11 @@ def users_show(id):
                     'state': submitted_data['address']['state'],
                     'postal_code': submitted_data['address']['postal_code'],
                 },
+                'address_coords': {
+                    'lat': submitted_data['address_coords']['lat'],
+                    'lng': submitted_data['address_coords']['lng']
+                },
+                #add avatar_url?
                 'price_rate': {
                     'water_by_plant': float(submitted_data['price_rate']['water_by_plant']) if submitted_data['price_rate']['water_by_plant'] else '',
                     'water_by_time': float(submitted_data['price_rate']['water_by_time'])  if submitted_data['price_rate']['water_by_time'] else '',
