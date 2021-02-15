@@ -42,6 +42,10 @@ def add_user():
                 'state': submitted_data['address']['state'],
                 'postal_code': submitted_data['address']['postal_code'],
             },
+            'address_coords': {
+                'lat': submitted_data['address_coords']['lat'],
+                'lng': submitted_data['address_coords']['lng']
+            },
             'avatar_url': submitted_data['avatar_url'],
             'price_rate': {
                 'water_by_plant': float(submitted_data['price_rate']['water_by_plant']) if submitted_data['price_rate']['water_by_plant'] else '',
@@ -50,6 +54,7 @@ def add_user():
                 'repot_by_time': float(submitted_data['price_rate']['repot_by_time']) if submitted_data['price_rate']['repot_by_time'] else ''
             }
         }
+        print(new_user)
         db.child('users').push(new_user)
 
         return(new_user, 201)
@@ -104,6 +109,11 @@ def users_show(id):
                     'state': submitted_data['address']['state'],
                     'postal_code': submitted_data['address']['postal_code'],
                 },
+                'address_coords': {
+                    'lat': submitted_data['address_coords']['lat'],
+                    'lng': submitted_data['address_coords']['lng']
+                },
+                'avatar_url': submitted_data['avatar_url'],
                 'price_rate': {
                     'water_by_plant': float(submitted_data['price_rate']['water_by_plant']) if submitted_data['price_rate']['water_by_plant'] else '',
                     'water_by_time': float(submitted_data['price_rate']['water_by_time'])  if submitted_data['price_rate']['water_by_time'] else '',
@@ -148,6 +158,13 @@ def submit_request():
         },
         'owner_rating': '',
         'sitter_rating': '',
+        'last_accessed_by_sitter': '',
+        'last_accessed_by_owner': '',
+        'last_message': {
+            'timestamp': '',
+            'message': '',
+            'sender': '',
+        }
     }
     postedRequest = db.child('requests').push(new_request)
     # print(postedRequest['name']) #this is the newly pushed/generated request ID
@@ -178,9 +195,10 @@ def start_chat(request_id, request):
         'timestamp': str(datetime.utcnow()),
         'message': message,
         'sender': request['owner'],
-        'request_id': request_id 
+        'request_id': request_id
     }
     db.child('messages').push(new_message)
+    db.child('requests').child(new_message['request_id']).child('last_message').update(new_message)
     return({'message':'Message successfully sent'})
 
 #request show via backend ID
@@ -223,20 +241,20 @@ def find_requests(id):
 @app.route('/requests-by-user/<string:id>', methods=['GET'])
 def user_requests(id):
     db = firebase.database()
-    request = db.child('requests').order_by_child('owner').equal_to(id).get().val()
-    if request:
-        request.update(db.child('requests').order_by_child('sitter').equal_to(id).get().val())
+    requests = db.child('requests').order_by_child('owner').equal_to(id).get().val()
+    if requests:
+        requests.update(db.child('requests').order_by_child('sitter').equal_to(id).get().val())
     else:
-        request = db.child('requests').order_by_child('sitter').equal_to(id).get().val()
-        if request:
-            request.update(db.child('requests').order_by_child('owner').equal_to(id).get().val())
-    if request:
-        for request_id, request_data in request.items():
+        requests = db.child('requests').order_by_child('sitter').equal_to(id).get().val()
+        # if requests:
+        #     requests.update(db.child('requests').order_by_child('owner').equal_to(id).get().val())
+    if requests:
+        for request_id, request_data in requests.items():
             owner = db.child('users').child(escape(request_data['owner'])).get().val()
             sitter = db.child('users').child(escape(request_data['sitter'])).get().val()
-            request[request_id]['owner_name'] = owner['full_name']
-            request[request_id]['sitter_name'] = sitter['full_name']
-        return(request, 200)
+            requests[request_id]['owner_name'] = owner['full_name']
+            requests[request_id]['sitter_name'] = sitter['full_name']
+        return(requests, 200)
     else:
         return({'message': 'No requests have been saved with the logged in user\'s ID.'}, 204)
 
@@ -255,6 +273,9 @@ def send_message():
         'photo_url': submitted_data['photo_url']
     }
     db.child('messages').push(new_message)
+    if new_message['photo']:
+        new_message['message'] = 'Photo Message'
+    db.child('requests').child(new_message['request_id']).child('last_message').update(new_message)
     return({'message':'Message successfully sent'}, 200)
 
 @app.route('/messages-by-request/<string:id>', methods=['GET'])
