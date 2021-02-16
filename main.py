@@ -2,6 +2,7 @@ from flask import Flask, request, Response, abort, jsonify
 from flask_cors import CORS, cross_origin
 import os
 import stripe
+import json
 from datetime import datetime
 from markupsafe import escape
 from pyrebase import pyrebase
@@ -19,7 +20,7 @@ config = {
 app = Flask(__name__)
 CORS(app, support_credentials=True)
 firebase = pyrebase.initialize_app(config)
-YOUR_DOMAIN = 'http://localhost:3000/checkout'
+YOUR_DOMAIN = 'http://localhost:3000/inbox'
 
 #user post
 @app.route('/users', methods=['POST'])
@@ -149,6 +150,7 @@ def submit_request():
         'owner': submitted_data['owner'],
         'sitter': submitted_data['sitter'],
         'status': 'pending',
+        'paid': False,
         'date_of_service': submitted_data.get('date_of_service'),
         'services': {
             'water_by_plant': submitted_data['services']['water_by_plant'],
@@ -223,6 +225,25 @@ def request_show(id):
             return(confirm_request, 200) #success message needed
         else:
             return({'message':'No request has been made with this ID.'}, 204)
+
+@app.route('/request-last-accessed/<string:id>', methods=['PUT'])
+def update_request_last_accessed(id):
+    db = firebase.database()
+    submitted_data = request.get_json()
+    sitting_request = db.child('requests').child(escape(id)).get().val()
+    if sitting_request:
+        if submitted_data.get('last_accessed_by_sitter'):
+            confirm_request = {
+                'last_accessed_by_sitter': submitted_data.get('last_accessed_by_sitter'),
+            }
+        else: 
+            confirm_request = {
+                'last_accessed_by_owner': submitted_data.get('last_accessed_by_owner'),
+            }
+        db.child('requests').child(escape(id)).update(confirm_request)
+        return(confirm_request, 200) #success message needed
+    else:
+        return({'message':'No request has been made with this ID.'}, 204)
 
 @app.route('/requests-by-sitter/<string:id>', methods=['GET'])
 def find_requests(id):
@@ -347,9 +368,22 @@ def get_user_ratings(id):
     else:
         return({'message': 'No requests have been saved with the logged in user\'s ID.'}, 204)
 
+@app.route('/request-payment/<string:id>', methods=['PUT'])
+def request_payment(id):
+    db=firebase.database()
+    sitting_request = db.child('requests').child(escape(id)).get().val()
+    if sitting_request:
+        pay_request = {
+            'paid': True,
+        }
+        db.child('requests').child(escape(id)).update(pay_request)
+        return(sitting_request, 200) #success message needed
+    else:
+        return({'message':'No request has been made with this ID.'}, 204)
 
 @app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
+    submitted_data = request.get_json()
     try:
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
@@ -357,13 +391,22 @@ def create_checkout_session():
                 {
                     'price_data': {
                         'currency': 'usd',
-                        'unit_amount': 2000,
+                        'unit_amount_decimal': 350,
                         'product_data': {
-                            'name': 'Stubborn Attachments',
-                            'images': ['https://i.imgur.com/EHyR2nP.png'],
-                        },
+                            'name': 'water_by_plant'
+                        }
                     },
-                    'quantity': 1,
+                    'quantity': 3,
+                },
+                {
+                    'price_data': {
+                        'currency': 'usd',
+                        'unit_amount_decimal': 450,
+                        'product_data': {
+                            'name': 'repot_by_plant'
+                        }
+                    },
+                    'quantity': 5,
                 },
             ],
             mode='payment',
