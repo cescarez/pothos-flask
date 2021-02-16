@@ -368,6 +368,18 @@ def get_user_ratings(id):
     else:
         return({'message': 'No requests have been saved with the logged in user\'s ID.'}, 204)
 
+@app.route('/request-payment/<string:id>', methods=['PUT'])
+def request_payment(id):
+    db=firebase.database()
+    sitting_request = db.child('requests').child(escape(id)).get().val()
+    if sitting_request:
+        pay_request = {
+            'paid': True,
+        }
+        db.child('requests').child(escape(id)).update(pay_request)
+        return(sitting_request, 200) #success message needed
+    else:
+        return({'message':'No request has been made with this ID.'}, 204)
 
 @app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
@@ -404,26 +416,6 @@ def create_checkout_session():
         return jsonify({'id': checkout_session.id})
     except Exception as e:
         return jsonify(error=str(e)), 403
-
-# def calculate_order_amount(items):
-#     # Replace this constant with a calculation of the order's amount
-#     # Calculate the order total on the server to prevent
-#     # people from directly manipulating the amount on the client
-#     return 1400
-
-# @app.route('/create-payment-intent', methods=['POST'])
-# def create_payment():
-#     try:
-#         data = json.loads(request.data)
-#         intent = stripe.PaymentIntent.create(
-#             amount=calculate_order_amount(data['items']),
-#             currency='usd'
-#         )
-#         return jsonify({
-#             'clientSecret': intent['client_secret']
-#         })
-#     except Exception as e:
-#         return jsonify(error=str(e)), 403
 
 # if __name__ == '__main__':
 #     print('This file has been run as main')
