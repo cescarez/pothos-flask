@@ -2,6 +2,7 @@ from flask import Flask, request, Response, abort, jsonify
 from flask_cors import CORS, cross_origin
 import os
 import stripe
+import json
 from datetime import datetime
 from markupsafe import escape
 from pyrebase import pyrebase
@@ -19,7 +20,7 @@ config = {
 app = Flask(__name__)
 CORS(app, support_credentials=True)
 firebase = pyrebase.initialize_app(config)
-YOUR_DOMAIN = 'http://localhost:3000/checkout'
+YOUR_DOMAIN = 'http://localhost:3000/inbox'
 
 #user post
 @app.route('/users', methods=['POST'])
@@ -149,6 +150,7 @@ def submit_request():
         'owner': submitted_data['owner'],
         'sitter': submitted_data['sitter'],
         'status': 'pending',
+        'paid': False,
         'date_of_service': submitted_data.get('date_of_service'),
         'services': {
             'water_by_plant': submitted_data['services']['water_by_plant'],
@@ -369,6 +371,7 @@ def get_user_ratings(id):
 
 @app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
+    submitted_data = request.get_json()
     try:
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
@@ -376,13 +379,22 @@ def create_checkout_session():
                 {
                     'price_data': {
                         'currency': 'usd',
-                        'unit_amount': 2000,
+                        'unit_amount_decimal': 350,
                         'product_data': {
-                            'name': 'Stubborn Attachments',
-                            'images': ['https://i.imgur.com/EHyR2nP.png'],
-                        },
+                            'name': 'water_by_plant'
+                        }
                     },
-                    'quantity': 1,
+                    'quantity': 3,
+                },
+                {
+                    'price_data': {
+                        'currency': 'usd',
+                        'unit_amount_decimal': 450,
+                        'product_data': {
+                            'name': 'repot_by_plant'
+                        }
+                    },
+                    'quantity': 5,
                 },
             ],
             mode='payment',
@@ -392,6 +404,26 @@ def create_checkout_session():
         return jsonify({'id': checkout_session.id})
     except Exception as e:
         return jsonify(error=str(e)), 403
+
+# def calculate_order_amount(items):
+#     # Replace this constant with a calculation of the order's amount
+#     # Calculate the order total on the server to prevent
+#     # people from directly manipulating the amount on the client
+#     return 1400
+
+# @app.route('/create-payment-intent', methods=['POST'])
+# def create_payment():
+#     try:
+#         data = json.loads(request.data)
+#         intent = stripe.PaymentIntent.create(
+#             amount=calculate_order_amount(data['items']),
+#             currency='usd'
+#         )
+#         return jsonify({
+#             'clientSecret': intent['client_secret']
+#         })
+#     except Exception as e:
+#         return jsonify(error=str(e)), 403
 
 # if __name__ == '__main__':
 #     print('This file has been run as main')
