@@ -3,7 +3,8 @@ from flask_cors import CORS, cross_origin
 import os
 import stripe
 import json
-from datetime import datetime
+from datetime import datetime, date
+import time
 from markupsafe import escape
 from pyrebase import pyrebase
 from dotenv import load_dotenv
@@ -21,6 +22,7 @@ app = Flask(__name__)
 CORS(app, support_credentials=True)
 firebase = pyrebase.initialize_app(config)
 YOUR_DOMAIN = 'http://localhost:3000/inbox'
+
 
 #user post
 @app.route('/users', methods=['POST'])
@@ -170,13 +172,13 @@ def submit_request():
     }
     postedRequest = db.child('requests').push(new_request)
     # print(postedRequest['name']) #this is the newly pushed/generated request ID
-    start_chat(postedRequest['name'], new_request)
-
+    start_chat(postedRequest['name'], new_request, submitted_data.get('date_of_service'))
     return({'message':'Request was successfully submitted'},201)
 #first message that initializes chat, sent with request
-def start_chat(request_id, request):
+def start_chat(request_id, request, date_of_service):
     db = firebase.database()
-    #for string interpolation and more descriptive request messaging.... to be implemented... not now.
+    date_of_service = date_of_service[0:10]
+
     watering_count = request['services']['water_by_plant']
     watering_hours = int(request['services']['water_by_time']) * 0.5
     repotting_count = request['services']['repot_by_plant']
@@ -184,14 +186,32 @@ def start_chat(request_id, request):
     watering = watering_count or watering_hours
     repotting = repotting_count or repotting_hours
 
+    service = ""
+    if watering:
+        if watering_count:
+            service += f"water {watering_count} plants"
+        if watering_hours:
+            if service:
+                service += ", "
+            service += f"water for {watering_hours} hours"
+    if repotting:
+        if watering_count:
+            if service:
+                service += ", "
+            service += f"repot {repotting_count} plants"
+        if watering_hours:
+            if service:
+                service += ", "
+            service += f"repot for {repotting_hours} hours"
+
     if (watering and repotting):
-        message = 'Hey bud (pun intended), are you available for watering and plant sitting services?'
+        message = f"Hey bud (pun intended), are you available for watering and plant sitting services on {date_of_service} to {service}?"
     elif(watering):
-        message = 'Hey bud (pun intended), are you available for watering services?'
+        message = f"Hey bud (pun intended), are you available for watering services on {date_of_service} to {service}?"
     elif (repotting):
-        message = 'Hey bud (pun intended), are you available for repotting services?'
+        message = f"Hey bud (pun intended), are you available for repotting services on {date_of_service} to {service}?"
     else:
-        message = 'Hey bud (pun intended), just sayin\' hi :).'
+        message = "Hey bud (pun intended), just sayin\' hi :)."
 
     new_message = {
         'timestamp': str(datetime.utcnow()),
@@ -383,7 +403,7 @@ def request_payment(id):
 
 @app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
-    submitted_data = request.get_json()
+    # submitted_data = request.get_json()
     try:
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
