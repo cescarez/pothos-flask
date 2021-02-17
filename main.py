@@ -195,11 +195,11 @@ def start_chat(request_id, request, date_of_service):
                 service += ", "
             service += f"water for {watering_hours} hours"
     if repotting:
-        if watering_count:
+        if repotting_count:
             if service:
                 service += ", "
             service += f"repot {repotting_count} plants"
-        if watering_hours:
+        if repotting_hours:
             if service:
                 service += ", "
             service += f"repot for {repotting_hours} hours"
