@@ -135,6 +135,8 @@ def find_user(auth_id):
     db = firebase.database()
     user = db.child('users').order_by_child('auth_id').equal_to(auth_id).get().val()
     if user:
+        user_ratings = get_user_ratings(list(user.keys())[0])[0]
+        user.update({'sitter_rating': user_ratings.get('sitter_rating'), 'owner_rating': user_ratings.get('owner_rating')})
         return(user, 200)
     else:
         return({'message':'No user profile has been saved with the logged in user\'s authentication ID.'}, 404)
