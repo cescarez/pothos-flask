@@ -21,7 +21,7 @@ config = {
 app = Flask(__name__)
 CORS(app, support_credentials=True)
 firebase = pyrebase.initialize_app(config)
-YOUR_DOMAIN = 'http://localhost:3000/inbox'
+YOUR_DOMAIN = 'https://pothos-webapp.herokuapp.com/inbox'
 
 
 #user post
